@@ -31,7 +31,6 @@
   <script>
     const factoryAddress = "0xF16784dcAf838a3e16bEF7711a62D12413c39BD1";
     const routerAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
-    const WAVAX = "0xEBad2487329f9f6aC858b2Bc78F9aF04283856b2";
     const AVAX_TOKEN = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
     const factoryAbi = [
@@ -52,7 +51,7 @@
 
     async function connectWallet() {
       provider = new WalletConnectProvider.default({
-        rpc: { 43114: "https://api.avax.network/ext/bc/C/rpc" },
+        rpc: { 43114: "https://avalanche-c-chain.publicnode.com" },
         chainId: 43114,
         qrcode: true
       });
@@ -75,11 +74,15 @@
           pair.methods.token0().call(),
           pair.methods.token1().call()
         ]);
+        console.log(`Pair ${i}: ${pairAddr} | t0: ${t0} | t1: ${t1}`);
 
-        const isAvaxPair = (t0.toLowerCase() === AVAX_TOKEN.toLowerCase() || t1.toLowerCase() === AVAX_TOKEN.toLowerCase());
+        const isAvaxPair =
+          t0.toLowerCase() === AVAX_TOKEN.toLowerCase() ||
+          t1.toLowerCase() === AVAX_TOKEN.toLowerCase();
         if (!isAvaxPair) continue;
 
-        const otherToken = t0.toLowerCase() === AVAX_TOKEN.toLowerCase() ? t1 : t0;
+        const otherToken =
+          t0.toLowerCase() === AVAX_TOKEN.toLowerCase() ? t1 : t0;
 
         if (!tokenMap[otherToken]) {
           try {
@@ -90,9 +93,12 @@
               tok.methods.decimals().call()
             ]);
             tokenMap[otherToken] = { address: otherToken, name, symbol, decimals };
-          } catch (e) { console.log("Error loading", otherToken); }
+          } catch (e) {
+            console.log("❌ Error loading token:", otherToken);
+          }
         }
       }
+
       const tokenList = Object.values(tokenMap);
       const from = document.getElementById("fromToken");
       const to = document.getElementById("toToken");
@@ -102,7 +108,7 @@
       from.appendChild(avaxOption.cloneNode(true));
       to.appendChild(avaxOption.cloneNode(true));
 
-      tokenList.forEach(t => {
+      tokenList.forEach((t) => {
         const opt = new Option(`${t.symbol} (${t.name})`, t.address);
         from.appendChild(opt.cloneNode(true));
         to.appendChild(opt.cloneNode(true));
