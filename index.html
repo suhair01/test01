@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Arena DEX - All Tokens</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { background-color: #121212; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+    .container { max-width: 440px; margin: 40px auto; background: #1f1f1f; padding: 24px; border-radius: 16px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    .token-box { background: #2a2a2a; padding: 16px; border-radius: 12px; margin-bottom: 16px; position: relative; }
+    label { font-size: 14px; }
+    input, select { width: 100%; padding: 10px; margin-top: 6px; background: #333; color: white; border: none; border-radius: 8px; font-size: 16px; }
+    .btn { background-color: #00c2ff; color: white; padding: 12px; width: 100%; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; margin-top: 16px; }
+    .info { margin-top: 8px; font-size: 14px; color: #ccc; }
+    .reverse-btn { background: #444; margin: 8px auto; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; font-size: 20px; }
+    .max-btn { position: absolute; top: 34px; right: 10px; background: #00c2ff; border: none; padding: 4px 10px; border-radius: 8px; color: white; cursor: pointer; font-size: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>🌀 Arena DEX</h2>
+  <div class="token-box">
+    <label>From Token:</label>
+    <select id="tokenInSelect"></select>
+    <div class="info" id="balanceIn">Balance: -</div>
+    <input id="tokenInAmount" placeholder="Enter amount" />
+    <button class="max-btn" onclick="setMax()">MAX</button>
+  </div>
+
+  <div class="reverse-btn" onclick="reverseTokens()">⇅</div>
+
+  <div class="token-box">
+    <label>To Token:</label>
+    <select id="tokenOutSelect"></select>
+    <div class="info" id="balanceOut">Balance: -</div>
+  </div>
+
+  <button class="btn" onclick="connect()">Connect Wallet</button>
+  <p class="info" id="walletStatus">Not connected</p>
+  <button class="btn" onclick="swap()">Swap</button>
+</div>
+
+<script>
+const factoryAddress = "0xF16784dcAf838a3e16bEF7711a62D12413c39BD1";
+const routerAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
+const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+const ABI = [
+  "function allPairsLength() view returns (uint)",
+  "function allPairs(uint) view returns (address)"
+];
+const PAIR_ABI = ["function token0() view returns (address)", "function token1() view returns (address)"];
+const ERC20_ABI = ["function symbol() view returns (string)", "function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"];
+
+let provider, signer, userAddress, tokenMap = {};
+
+async function connect() {
+  if (!window.ethereum) return alert("Install MetaMask");
+  provider = new ethers.BrowserProvider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = await provider.getSigner();
+  userAddress = await signer.getAddress();
+  document.getElementById("walletStatus").innerText = `Connected: ${userAddress}`;
+}
+
+async function loadFactoryTokens() {
+  const factory = new ethers.Contract(factoryAddress, ABI, provider);
+  const total = await factory.allPairsLength();
+  const tokens = new Set();
+
+  for (let i = 0; i < total; i++) {
+    const pairAddr = await factory.allPairs(i);
+    const pair = new ethers.Contract(pairAddr, PAIR_ABI, provider);
+    const t0 = await pair.token0();
+    const t1 = await pair.token1();
+    tokens.add(t0);
+    tokens.add(t1);
+  }
+
+  const tokenList = Array.from(tokens);
+  const selectIn = document.getElementById("tokenInSelect");
+  const selectOut = document.getElementById("tokenOutSelect");
+
+  for (const address of tokenList) {
+    try {
+      const token = new ethers.Contract(address, ERC20_ABI, provider);
+      const symbol = await token.symbol();
+      tokenMap[address] = { symbol, address };
+
+      const option = new Option(symbol, address);
+      selectIn.appendChild(option.cloneNode(true));
+      selectOut.appendChild(option.cloneNode(true));
+    } catch (err) {
+      console.log("Token error", address, err);
+    }
+  }
+}
+
+function reverseTokens() {
+  const inSel = document.getElementById("tokenInSelect");
+  const outSel = document.getElementById("tokenOutSelect");
+  const tmp = inSel.value;
+  inSel.value = outSel.value;
+  outSel.value = tmp;
+}
+
+function setMax() {
+  // implement max logic here if needed
+}
+
+function swap() {
+  alert("Real swap code to be added here based on selected tokens");
+}
+
+window.addEventListener("load", async () => {
+  if (window.ethereum) provider = new ethers.BrowserProvider(window.ethereum);
+  await loadFactoryTokens();
+});
+</script>
+</body>
+</html>
