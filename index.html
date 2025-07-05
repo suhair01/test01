@@ -43,6 +43,7 @@
 
 <script>
 const factoryAddress = "0xF16784dcAf838a3e16bEF7711a62D12413c39BD1";
+const wavax = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 const FACTORY_ABI = [
   "function allPairsLength() view returns (uint)",
   "function allPairs(uint) view returns (address)"
@@ -66,7 +67,7 @@ async function connect() {
   signer = await provider.getSigner();
   userAddress = await signer.getAddress();
   document.getElementById("walletStatus").innerText = `Connected: ${userAddress}`;
-  await loadTokensFromArenaFactory();
+  await loadWavaxPairsOnly();
 }
 
 async function getTokenInfo(ca) {
@@ -84,12 +85,12 @@ async function getTokenInfo(ca) {
   }
 }
 
-async function loadTokensFromArenaFactory() {
+async function loadWavaxPairsOnly() {
   const factory = new ethers.Contract(factoryAddress, FACTORY_ABI, provider);
   const total = await factory.allPairsLength();
   const tokens = new Set();
 
-  for (let i = 0; i < Math.min(total, 50); i++) {
+  for (let i = 0; i < Math.min(total, 200); i++) {
     try {
       const pairAddr = await factory.allPairs(i);
       const pair = new ethers.Contract(pairAddr, PAIR_ABI, provider);
@@ -97,12 +98,14 @@ async function loadTokensFromArenaFactory() {
         pair.token0(),
         pair.token1()
       ]);
-      tokens.add(token0);
-      tokens.add(token1);
+      if (token0.toLowerCase() === wavax.toLowerCase()) tokens.add(token1);
+      else if (token1.toLowerCase() === wavax.toLowerCase()) tokens.add(token0);
     } catch (err) {
-      console.log("Error fetching pair:", err);
+      console.log("Error fetching pair", i, err);
     }
   }
+
+  tokens.add(wavax); // Always include WAVAX
 
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
@@ -137,4 +140,3 @@ function swap() {
 </script>
 </body>
 </html>
-
