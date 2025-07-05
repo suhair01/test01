@@ -1,133 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Arena DEX Token Picker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+  <title>Arena DEX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
   <style>
-    body {
-      background-color: #121212;
-      color: white;
-      font-family: sans-serif;
-      padding: 20px;
-      margin: 0;
+    body { background: #111; color: #fff; font-family: sans-serif; text-align: center; padding: 40px; }
+    input, select, button {
+      padding: 12px; width: 90%; max-width: 350px;
+      margin: 10px auto; display: block;
+      border-radius: 8px; font-size: 16px;
     }
-    .container {
-      max-width: 420px;
-      margin: 0 auto;
-      background: #1f1f1f;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 0 16px rgba(0, 0, 0, 0.5);
-    }
-    h2 { text-align: center; color: #00c2ff; }
-    select, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    button {
-      background-color: #00c2ff;
-      color: white;
-      cursor: pointer;
-    }
-    #walletStatus {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 14px;
-      color: #ccc;
-    }
+    button { background: #e84142; border: none; color: white; cursor: pointer; }
+    #dex { background: #222; padding: 25px; border-radius: 16px; display: inline-block; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>🌀 Arena DEX - Tokens</h2>
-    
-    <button onclick="connect()">Connect Wallet</button>
-    <p id="walletStatus">Not connected</p>
-
-    <label>From Token:</label>
-    <select id="tokenInSelect"></select>
-
-    <label>To Token:</label>
-    <select id="tokenOutSelect"></select>
+  <h2>Arena DEX</h2>
+  <div id="dex">
+    <button onclick="connectWallet()">🔗 WalletConnect</button>
+    <select id="fromToken"></select>
+    <select id="toToken"></select>
+    <input id="amount" placeholder="Amount to Swap">
+    <input id="slippage" placeholder="Slippage (%)" value="1">
+    <div id="price">💱 Price: --</div>
+    <button onclick="swap()">🔄 Swap</button>
   </div>
 
   <script>
-    const FACTORY = "0xB9794E1BF5D79cD851a38024752DfF800B6b1cE1";
-    const FACTORY_ABI = [
-      "function allPairsLength() external view returns (uint256)",
-      "function allPairs(uint256) external view returns (address)"
+    const factoryAddress = "0xF16784dcAf838a3e16bEF7711a62D12413c39BD1";
+    const routerAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
+    const WAVAX = "0xEBad2487329f9f6aC858b2Bc78F9aF04283856b2";
+    const AVAX_TOKEN = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+
+    const factoryAbi = [
+      { "name": "allPairsLength", "type": "function", "inputs": [], "outputs": [{ "type": "uint256" }], "stateMutability": "view" },
+      { "name": "allPairs", "type": "function", "inputs": [{ "name": "", "type": "uint256" }], "outputs": [{ "type": "address" }], "stateMutability": "view" }
     ];
-    const PAIR_ABI = [
-      "function token0() external view returns (address)",
-      "function token1() external view returns (address)"
+    const pairAbi = [
+      { "name": "token0", "type": "function", "inputs": [], "outputs": [{ "type": "address" }], "stateMutability": "view" },
+      { "name": "token1", "type": "function", "inputs": [], "outputs": [{ "type": "address" }], "stateMutability": "view" }
     ];
-    const ERC20_ABI = [
-      "function symbol() view returns (string)",
-      "function name() view returns (string)"
+    const erc20Abi = [
+      { "name": "symbol", "type": "function", "inputs": [], "outputs": [{ "type": "string" }], "stateMutability": "view" },
+      { "name": "name", "type": "function", "inputs": [], "outputs": [{ "type": "string" }], "stateMutability": "view" },
+      { "name": "decimals", "type": "function", "inputs": [], "outputs": [{ "type": "uint8" }], "stateMutability": "view" }
     ];
 
-    let provider, signer;
+    let web3, provider, account;
 
-    async function connect() {
-      if (!window.ethereum) return alert("Please install MetaMask");
-      provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      document.getElementById("walletStatus").innerText = `Connected: ${address}`;
-      await fetchTokensFromFactory();
-    }
-
-    async function fetchTokensFromFactory() {
-      const factory = new ethers.Contract(FACTORY, FACTORY_ABI, provider);
-      const length = await factory.allPairsLength();
-      const tokenMap = {};
-
-      for (let i = 0; i < length; i++) {
-        try {
-          const pairAddress = await factory.allPairs(i);
-          const pair = new ethers.Contract(pairAddress, PAIR_ABI, provider);
-          const [token0, token1] = await Promise.all([
-            pair.token0(),
-            pair.token1()
-          ]);
-
-          for (let token of [token0, token1]) {
-            if (!tokenMap[token]) {
-              try {
-                const tokenContract = new ethers.Contract(token, ERC20_ABI, provider);
-                const [symbol, name] = await Promise.all([
-                  tokenContract.symbol(),
-                  tokenContract.name()
-                ]);
-                tokenMap[token] = { address: token, symbol, name };
-              } catch (e) { /* skip errors */ }
-            }
-          }
-        } catch (e) { continue; }
-      }
-
-      populateDropdowns(Object.values(tokenMap));
-    }
-
-    function populateDropdowns(tokens) {
-      const inSelect = document.getElementById("tokenInSelect");
-      const outSelect = document.getElementById("tokenOutSelect");
-      inSelect.innerHTML = outSelect.innerHTML = "";
-
-      tokens.forEach(t => {
-        const option = new Option(`${t.symbol} (${t.name})`, t.address);
-        inSelect.add(option.cloneNode(true));
-        outSelect.add(option.cloneNode(true));
+    async function connectWallet() {
+      provider = new WalletConnectProvider.default({
+        rpc: { 43114: "https://api.avax.network/ext/bc/C/rpc" },
+        chainId: 43114,
+        qrcode: true
       });
+      await provider.enable();
+      web3 = new Web3(provider);
+      const accounts = await web3.eth.getAccounts();
+      account = accounts[0];
+      alert("✅ Connected: " + account);
+      await loadArenaTokens();
+    }
+
+    async function loadArenaTokens() {
+      const factory = new web3.eth.Contract(factoryAbi, factoryAddress);
+      const pairCount = await factory.methods.allPairsLength().call();
+      const tokenMap = {};
+      for (let i = 0; i < pairCount; i++) {
+        const pairAddr = await factory.methods.allPairs(i).call();
+        const pair = new web3.eth.Contract(pairAbi, pairAddr);
+        const [t0, t1] = await Promise.all([
+          pair.methods.token0().call(),
+          pair.methods.token1().call()
+        ]);
+
+        const isAvaxPair = (t0.toLowerCase() === AVAX_TOKEN.toLowerCase() || t1.toLowerCase() === AVAX_TOKEN.toLowerCase());
+        if (!isAvaxPair) continue;
+
+        const otherToken = t0.toLowerCase() === AVAX_TOKEN.toLowerCase() ? t1 : t0;
+
+        if (!tokenMap[otherToken]) {
+          try {
+            const tok = new web3.eth.Contract(erc20Abi, otherToken);
+            const [name, symbol, decimals] = await Promise.all([
+              tok.methods.name().call(),
+              tok.methods.symbol().call(),
+              tok.methods.decimals().call()
+            ]);
+            tokenMap[otherToken] = { address: otherToken, name, symbol, decimals };
+          } catch (e) { console.log("Error loading", otherToken); }
+        }
+      }
+      const tokenList = Object.values(tokenMap);
+      const from = document.getElementById("fromToken");
+      const to = document.getElementById("toToken");
+      from.innerHTML = to.innerHTML = "";
+
+      const avaxOption = new Option("AVAX", AVAX_TOKEN);
+      from.appendChild(avaxOption.cloneNode(true));
+      to.appendChild(avaxOption.cloneNode(true));
+
+      tokenList.forEach(t => {
+        const opt = new Option(`${t.symbol} (${t.name})`, t.address);
+        from.appendChild(opt.cloneNode(true));
+        to.appendChild(opt.cloneNode(true));
+      });
+    }
+
+    async function swap() {
+      alert("Swap logic goes here");
     }
   </script>
 </body>
 </html>
-
