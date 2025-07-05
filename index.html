@@ -14,6 +14,7 @@
     }
     button { background: #e84142; border: none; color: white; cursor: pointer; }
     #dex { background: #222; padding: 25px; border-radius: 16px; display: inline-block; }
+    #price { margin-top: 10px; font-size: 18px; }
   </style>
 </head>
 <body>
@@ -22,8 +23,8 @@
     <button onclick="connectWallet()">🔗 WalletConnect</button>
     <select id="fromToken"></select>
     <select id="toToken"></select>
-    <input id="amount" placeholder="Amount to Swap">
-    <input id="slippage" placeholder="Slippage (%)" value="1">
+    <input id="amount" placeholder="Amount to Swap" type="number" step="any" min="0">
+    <input id="slippage" placeholder="Slippage (%)" type="number" step="0.1" min="0" value="1">
     <div id="price">💱 Price: --</div>
     <button onclick="swap()">🔄 Swap</button>
   </div>
@@ -31,7 +32,8 @@
   <script>
     const factoryAddress = "0xF16784dcAf838a3e16bEF7711a62D12413c39BD1";
     const routerAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
-    const AVAX_TOKEN = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+    const AVAX_NATIVE = "AVAX_NATIVE";
+    const WAVAX_TOKEN = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
     const factoryAbi = [
       { "name": "allPairsLength", "type": "function", "inputs": [], "outputs": [{ "type": "uint256" }], "stateMutability": "view" },
@@ -44,10 +46,49 @@
     const erc20Abi = [
       { "name": "symbol", "type": "function", "inputs": [], "outputs": [{ "type": "string" }], "stateMutability": "view" },
       { "name": "name", "type": "function", "inputs": [], "outputs": [{ "type": "string" }], "stateMutability": "view" },
-      { "name": "decimals", "type": "function", "inputs": [], "outputs": [{ "type": "uint8" }], "stateMutability": "view" }
+      { "name": "decimals", "type": "function", "inputs": [], "outputs": [{ "type": "uint8" }], "stateMutability": "view" },
+      { "name": "approve", "type": "function", "inputs": [
+        {"name": "spender", "type": "address"},
+        {"name": "amount", "type": "uint256"}
+      ], "outputs": [{"type": "bool"}], "stateMutability": "nonpayable" }
+    ];
+    const routerAbi = [
+      { "name": "swapExactTokensForTokens", "type": "function", "stateMutability": "nonpayable",
+        "inputs": [
+          {"name": "amountIn", "type": "uint256"},
+          {"name": "amountOutMin", "type": "uint256"},
+          {"name": "path", "type": "address[]"},
+          {"name": "to", "type": "address"},
+          {"name": "deadline", "type": "uint256"}
+        ], "outputs": [{"type": "uint256[]"}]
+      },
+      { "name": "swapExactAVAXForTokens", "type": "function", "stateMutability": "payable",
+        "inputs": [
+          {"name": "amountOutMin", "type": "uint256"},
+          {"name": "path", "type": "address[]"},
+          {"name": "to", "type": "address"},
+          {"name": "deadline", "type": "uint256"}
+        ], "outputs": [{"type": "uint256[]"}]
+      },
+      { "name": "swapExactTokensForAVAX", "type": "function", "stateMutability": "nonpayable",
+        "inputs": [
+          {"name": "amountIn", "type": "uint256"},
+          {"name": "amountOutMin", "type": "uint256"},
+          {"name": "path", "type": "address[]"},
+          {"name": "to", "type": "address"},
+          {"name": "deadline", "type": "uint256"}
+        ], "outputs": [{"type": "uint256[]"}]
+      },
+      { "name": "getAmountsOut", "type": "function", "stateMutability": "view",
+        "inputs": [
+          {"name": "amountIn", "type": "uint256"},
+          {"name": "path", "type": "address[]"}
+        ], "outputs": [{"type": "uint256[]"}]
+      }
     ];
 
     let web3, provider, account;
+    let tokens = [];
 
     async function connectWallet() {
       provider = new WalletConnectProvider.default({
@@ -61,6 +102,7 @@
       account = accounts[0];
       alert("✅ Connected: " + account);
       await loadArenaTokens();
+      setupPriceListener();
     }
 
     async function loadArenaTokens() {
@@ -70,19 +112,12 @@
       for (let i = 0; i < pairCount; i++) {
         const pairAddr = await factory.methods.allPairs(i).call();
         const pair = new web3.eth.Contract(pairAbi, pairAddr);
-        const [t0, t1] = await Promise.all([
-          pair.methods.token0().call(),
-          pair.methods.token1().call()
-        ]);
-        console.log(`Pair ${i}: ${pairAddr} | t0: ${t0} | t1: ${t1}`);
+        const [t0, t1] = await Promise.all([pair.methods.token0().call(), pair.methods.token1().call()]);
 
-        const isAvaxPair =
-          t0.toLowerCase() === AVAX_TOKEN.toLowerCase() ||
-          t1.toLowerCase() === AVAX_TOKEN.toLowerCase();
+        const isAvaxPair = t0.toLowerCase() === WAVAX_TOKEN.toLowerCase() || t1.toLowerCase() === WAVAX_TOKEN.toLowerCase();
         if (!isAvaxPair) continue;
 
-        const otherToken =
-          t0.toLowerCase() === AVAX_TOKEN.toLowerCase() ? t1 : t0;
+        const otherToken = t0.toLowerCase() === WAVAX_TOKEN.toLowerCase() ? t1 : t0;
 
         if (!tokenMap[otherToken]) {
           try {
@@ -93,30 +128,181 @@
               tok.methods.decimals().call()
             ]);
             tokenMap[otherToken] = { address: otherToken, name, symbol, decimals };
-          } catch (e) {
-            console.log("❌ Error loading token:", otherToken);
+          } catch(e) {
+            console.log("Error loading token", otherToken, e);
           }
         }
       }
 
-      const tokenList = Object.values(tokenMap);
+      tokens = Object.values(tokenMap);
+      // Add AVAX native as a token option:
+      tokens.unshift({address: AVAX_NATIVE, symbol: "AVAX", name: "Avalanche Native", decimals: 18});
+
       const from = document.getElementById("fromToken");
       const to = document.getElementById("toToken");
       from.innerHTML = to.innerHTML = "";
 
-      const avaxOption = new Option("AVAX", AVAX_TOKEN);
-      from.appendChild(avaxOption.cloneNode(true));
-      to.appendChild(avaxOption.cloneNode(true));
-
-      tokenList.forEach((t) => {
+      tokens.forEach(t => {
         const opt = new Option(`${t.symbol} (${t.name})`, t.address);
         from.appendChild(opt.cloneNode(true));
         to.appendChild(opt.cloneNode(true));
       });
     }
 
+    function setupPriceListener() {
+      const from = document.getElementById("fromToken");
+      const to = document.getElementById("toToken");
+      const amount = document.getElementById("amount");
+
+      function updatePrice() {
+        showPricePreview();
+      }
+
+      from.addEventListener("change", updatePrice);
+      to.addEventListener("change", updatePrice);
+      amount.addEventListener("input", updatePrice);
+    }
+
+    async function fetchUsdPrice(tokenAddress) {
+      if(tokenAddress === AVAX_NATIVE) {
+        // AVAX coin id for coingecko
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2&vs_currencies=usd");
+        const data = await res.json();
+        return data["avalanche-2"]?.usd || 0;
+      }
+      // Other tokens by contract address
+      const idRes = await fetch(`https://api.coingecko.com/api/v3/coins/avalanche/contract/${tokenAddress.toLowerCase()}`);
+      if(idRes.status !== 200) return 0;
+      const idData = await idRes.json();
+      return idData.market_data?.current_price?.usd || 0;
+    }
+
+    async function showPricePreview() {
+      const fromToken = document.getElementById("fromToken").value;
+      const toToken = document.getElementById("toToken").value;
+      const amountRaw = document.getElementById("amount").value;
+      if(!amountRaw || isNaN(amountRaw) || amountRaw <= 0) {
+        document.getElementById("price").innerText = "💱 Price: --";
+        return;
+      }
+      const amount = parseFloat(amountRaw);
+
+      // Find token decimals
+      const fromDec = tokens.find(t=>t.address===fromToken)?.decimals || 18;
+      const toDec = tokens.find(t=>t.address===toToken)?.decimals || 18;
+
+      const router = new web3.eth.Contract(routerAbi, routerAddress);
+      try {
+        const amountInWei = web3.utils.toBN(amount * (10**fromDec));
+        const path = [];
+
+        if(fromToken === AVAX_NATIVE) path.push(WAVAX_TOKEN);
+        else path.push(fromToken);
+
+        if(toToken === AVAX_NATIVE) path.push(WAVAX_TOKEN);
+        else path.push(toToken);
+
+        const amountsOut = await router.methods.getAmountsOut(amountInWei.toString(), path).call();
+        const amountOut = amountsOut[amountsOut.length - 1];
+
+        const priceInTokens = amountOut / (10 ** toDec);
+        const pricePerFromToken = priceInTokens / amount;
+
+        // Get USD prices
+        const [usdFrom, usdTo] = await Promise.all([fetchUsdPrice(fromToken), fetchUsdPrice(toToken)]);
+        const usdValue = pricePerFromToken * usdTo;
+
+        document.getElementById("price").innerText = `💱 Price: 1 ${tokens.find(t=>t.address===fromToken).symbol} ≈ ${pricePerFromToken.toFixed(6)} ${tokens.find(t=>t.address===toToken).symbol} (~$${usdValue.toFixed(4)})`;
+      } catch (e) {
+        console.log("Price preview error", e);
+        document.getElementById("price").innerText = "💱 Price: --";
+      }
+    }
+
     async function swap() {
-      alert("Swap logic goes here");
+      if (!account) return alert("Please connect wallet first");
+      const fromToken = document.getElementById("fromToken").value;
+      const toToken = document.getElementById("toToken").value;
+      const amountRaw = document.getElementById("amount").value;
+      const slippagePercent = parseFloat(document.getElementById("slippage").value);
+      if(!amountRaw || isNaN(amountRaw) || amountRaw <= 0) return alert("Enter a valid amount");
+      if(slippagePercent < 0 || slippagePercent > 50) return alert("Slippage must be 0-50%");
+
+      const amount = parseFloat(amountRaw);
+      const fromTokenData = tokens.find(t=>t.address === fromToken);
+      const toTokenData = tokens.find(t=>t.address === toToken);
+      if(!fromTokenData || !toTokenData) return alert("Select valid tokens");
+
+      const router = new web3.eth.Contract(routerAbi, routerAddress);
+      const deadline = Math.floor(Date.now() / 1000) + 1800; // 30 mins
+
+      let path = [];
+      let amountInWei, amountOutMin;
+
+      try {
+        if (fromToken === AVAX_NATIVE && toToken !== AVAX_NATIVE) {
+          // AVAX -> token swap (use swapExactAVAXForTokens)
+          path = [WAVAX_TOKEN, toToken];
+          amountInWei = web3.utils.toWei(amount.toString(), 'ether');
+          const amountsOut = await router.methods.getAmountsOut(amountInWei, path).call();
+          amountOutMin = web3.utils.toBN(amountsOut[1]).muln(100 - slippagePercent).divn(100);
+
+          await router.methods.swapExactAVAXForTokens(
+            amountOutMin.toString(),
+            path,
+            account,
+            deadline
+          ).send({ from: account, value: amountInWei });
+
+        } else if (toToken === AVAX_NATIVE && fromToken !== AVAX_NATIVE) {
+          // token -> AVAX swap (use swapExactTokensForAVAX)
+          path = [fromToken, WAVAX_TOKEN];
+          const tokContract = new web3.eth.Contract(erc20Abi, fromToken);
+          const decimals = await tokContract.methods.decimals().call();
+          amountInWei = web3.utils.toBN(amount * (10 ** decimals));
+          const amountsOut = await router.methods.getAmountsOut(amountInWei.toString(), path).call();
+          amountOutMin = web3.utils.toBN(amountsOut[1]).muln(100 - slippagePercent).divn(100);
+
+          // Approve first
+          await tokContract.methods.approve(routerAddress, amountInWei.toString()).send({ from: account });
+
+          await router.methods.swapExactTokensForAVAX(
+            amountInWei.toString(),
+            amountOutMin.toString(),
+            path,
+            account,
+            deadline
+          ).send({ from: account });
+
+        } else if (fromToken !== AVAX_NATIVE && toToken !== AVAX_NATIVE) {
+          // token -> token swap
+          path = [fromToken, toToken];
+          const tokContract = new web3.eth.Contract(erc20Abi, fromToken);
+          const decimals = await tokContract.methods.decimals().call();
+          amountInWei = web3.utils.toBN(amount * (10 ** decimals));
+          const amountsOut = await router.methods.getAmountsOut(amountInWei.toString(), path).call();
+          amountOutMin = web3.utils.toBN(amountsOut[1]).muln(100 - slippagePercent).divn(100);
+
+          // Approve first
+          await tokContract.methods.approve(routerAddress, amountInWei.toString()).send({ from: account });
+
+          await router.methods.swapExactTokensForTokens(
+            amountInWei.toString(),
+            amountOutMin.toString(),
+            path,
+            account,
+            deadline
+          ).send({ from: account });
+
+        } else {
+          return alert("Swapping AVAX to AVAX is not supported");
+        }
+
+        alert("✅ Swap successful!");
+      } catch(e) {
+        alert("❌ Swap failed: " + e.message);
+        console.error(e);
+      }
     }
   </script>
 </body>
