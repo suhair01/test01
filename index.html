@@ -45,7 +45,7 @@
 const factoryAddress = "0xF16784dcAf838a3e16bEF7711a62D12413c39BD1";
 const routerAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
-const ABI = [
+const FACTORY_ABI = [
   "function allPairsLength() view returns (uint)",
   "function allPairs(uint) view returns (address)"
 ];
@@ -61,25 +61,30 @@ async function connect() {
   signer = await provider.getSigner();
   userAddress = await signer.getAddress();
   document.getElementById("walletStatus").innerText = `Connected: ${userAddress}`;
+  await loadFactoryTokens();
 }
 
 async function loadFactoryTokens() {
-  const factory = new ethers.Contract(factoryAddress, ABI, provider);
+  const factory = new ethers.Contract(factoryAddress, FACTORY_ABI, provider);
   const total = await factory.allPairsLength();
   const tokens = new Set();
 
   for (let i = 0; i < total; i++) {
     const pairAddr = await factory.allPairs(i);
     const pair = new ethers.Contract(pairAddr, PAIR_ABI, provider);
-    const t0 = await pair.token0();
-    const t1 = await pair.token1();
-    tokens.add(t0);
-    tokens.add(t1);
+    try {
+      const t0 = await pair.token0();
+      const t1 = await pair.token1();
+      tokens.add(t0);
+      tokens.add(t1);
+    } catch (e) { console.log("Pair error", e); }
   }
 
   const tokenList = Array.from(tokens);
   const selectIn = document.getElementById("tokenInSelect");
   const selectOut = document.getElementById("tokenOutSelect");
+  selectIn.innerHTML = '';
+  selectOut.innerHTML = '';
 
   for (const address of tokenList) {
     try {
@@ -105,17 +110,12 @@ function reverseTokens() {
 }
 
 function setMax() {
-  // implement max logic here if needed
+  // optional: add logic here later
 }
 
 function swap() {
-  alert("Real swap code to be added here based on selected tokens");
+  alert("Real swap logic to be implemented here");
 }
-
-window.addEventListener("load", async () => {
-  if (window.ethereum) provider = new ethers.BrowserProvider(window.ethereum);
-  await loadFactoryTokens();
-});
 </script>
 </body>
 </html>
