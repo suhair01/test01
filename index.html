@@ -509,10 +509,16 @@ window.addEventListener("click", function (e) {
     popup.style.display = "none";
   }
 });
-function refreshSwap() {
+
+  function refreshSwap() {
+  if (!provider || !userAddress) {
+    alert("Please connect wallet first.");
+    return;
+  }
   updateBalances();
   updateEstimate();
 }
+
 
 </script>
 </body>
