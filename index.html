@@ -165,26 +165,50 @@
     .btn:hover {
       background: #801722;
     }
-    .top-bar {
+   .top-bar {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 8px;
+  position: relative;
 }
 
-.slippage-box {
-  font-size: 12px;
-  color: var(--subtle);
-  text-align: right;
-  background: #141414;
-  padding: 4px 10px;
-  border-radius: 10px;
+.settings-wrapper {
+  position: relative;
 }
-.slippage-box input {
+
+.settings-btn {
   background: transparent;
   border: none;
   color: white;
-  font-size: 12px;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
 }
+
+.slippage-popup {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background: #1e1e1e;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  display: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 100;
+}
+
+.slippage-popup input {
+  background: #2a2a2a;
+  border: none;
+  color: white;
+  padding: 4px 6px;
+  border-radius: 6px;
+  width: 40px;
+  margin-left: 6px;
+  font-size: 13px;
+}
+
 
   </style>
 </head>
@@ -200,8 +224,14 @@
   <div class="swap-container">
     <div class="swap-container">
   <div class="top-bar">
-    <div class="slippage-box">Slippage: <input id="slippage" value="1" style="width: 40px; text-align:center;">%</div>
+  <div class="settings-wrapper">
+    <button class="settings-btn" onclick="toggleSlippage()">⚙️</button>
+    <div class="slippage-popup" id="slippagePopup">
+      Slippage: <input id="slippage" value="1" style="width: 40px; text-align: center;">%
+    </div>
   </div>
+</div>
+
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
@@ -429,6 +459,20 @@ document.getElementById("tokenInSelect").addEventListener("change", async () => 
 document.getElementById("tokenOutSelect").addEventListener("change", async () => {
   updateLogos(); await updateBalances(); updateEstimate();
 });
+  function toggleSlippage() {
+  const popup = document.getElementById("slippagePopup");
+  popup.style.display = popup.style.display === "block" ? "none" : "block";
+}
+
+// Optional: Close popup if clicking outside
+window.addEventListener("click", function (e) {
+  const popup = document.getElementById("slippagePopup");
+  const btn = document.querySelector(".settings-btn");
+  if (!popup.contains(e.target) && !btn.contains(e.target)) {
+    popup.style.display = "none";
+  }
+});
+
 </script>
 </body>
 </html>
