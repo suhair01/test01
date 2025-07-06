@@ -226,6 +226,19 @@
   font-size: 13px;
   pointer-events: none;
 }
+.refresh-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: transform 0.2s;
+}
+
+.refresh-btn:hover {
+  transform: rotate(90deg);
+}
 
 
   </style>
@@ -241,8 +254,9 @@
 
   <div class="swap-container">
     <div class="swap-container">
-  <div class="top-bar">
-  <div class="settings-wrapper">
+ <div class="top-bar">
+  <div class="settings-wrapper" style="display: flex; gap: 8px;">
+    <button class="refresh-btn" onclick="refreshSwap()">🔄</button>
     <button class="settings-btn" onclick="toggleSlippage()">⚙️</button>
     <div class="slippage-popup" id="slippagePopup">
       <label style="margin-right: 6px;">Slippage:</label>
@@ -495,6 +509,10 @@ window.addEventListener("click", function (e) {
     popup.style.display = "none";
   }
 });
+function refreshSwap() {
+  updateBalances();
+  updateEstimate();
+}
 
 </script>
 </body>
