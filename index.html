@@ -165,17 +165,16 @@
     .btn:hover {
       background: #801722;
     }
-  .top-bar {
+
+    .top-actions {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 00px;
+  gap: 10px;
+  margin-bottom: 0px; /* reduce gap here */
   position: relative;
 }
 
-.settings-wrapper {
-  position: relative;
-}
-
+.refresh-btn,
 .settings-btn {
   background: transparent;
   border: none;
@@ -185,18 +184,26 @@
   padding: 4px 8px;
 }
 
+.refresh-btn:hover {
+  transform: rotate(90deg);
+  transition: transform 0.2s;
+}
+
+.settings-wrapper {
+  position: relative;
+}
+
 .slippage-popup {
   position: absolute;
-  top: 10px;
+  top: 28px;
   right: 0;
   background: #1e1e1e;
   padding: 8px 12px;
   border-radius: 10px;
   font-size: 13px;
-  display: none;
+  display: none; /* ensures it doesn’t take space */
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   z-index: 100;
-  display: none;
   flex-direction: row;
   align-items: center;
   gap: 6px;
@@ -227,19 +234,6 @@
   font-size: 13px;
   pointer-events: none;
 }
-.refresh-btn {
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
-  transition: transform 0.2s;
-}
-
-.refresh-btn:hover {
-  transform: rotate(90deg);
-}
 
 
   </style>
@@ -254,9 +248,9 @@
   </div>
 
   <div class="swap-container">
-    <div class="top-bar">
-  <div class="settings-wrapper" style="display: flex; gap: 8px;">
-   <button class="refresh-btn" onclick="location.reload()">🔄</button>
+    <div class="top-actions">
+  <button class="refresh-btn" onclick="location.reload()">🔄</button>
+  <div class="settings-wrapper">
     <button class="settings-btn" onclick="toggleSlippage()">⚙️</button>
     <div class="slippage-popup" id="slippagePopup">
       <label style="margin-right: 6px;">Slippage:</label>
@@ -267,6 +261,7 @@
     </div>
   </div>
 </div>
+
     <div class="swap-container">
     <div class="token-box">
       <div class="token-row">
@@ -500,7 +495,11 @@ document.getElementById("tokenOutSelect").addEventListener("change", async () =>
   popup.style.display = popup.style.display === "block" ? "none" : "block";
 }
 
-// Optional: Close popup if clicking outside
+function toggleSlippage() {
+  const popup = document.getElementById("slippagePopup");
+  popup.style.display = popup.style.display === "block" ? "none" : "block";
+}
+
 window.addEventListener("click", function (e) {
   const popup = document.getElementById("slippagePopup");
   const btn = document.querySelector(".settings-btn");
@@ -509,14 +508,6 @@ window.addEventListener("click", function (e) {
   }
 });
 
-  function refreshSwap() {
-  if (!provider || !userAddress) {
-    alert("Please connect wallet first.");
-    return;
-  }
-  updateBalances();
-  updateEstimate();
-}
 
 
 </script>
