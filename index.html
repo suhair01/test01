@@ -235,6 +235,7 @@ const ERC20_ABI = [
 ];
 
 let provider, signer, router, userAddress;
+const tokenDecimals = {};
 
 const tokens = [
   { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
@@ -244,17 +245,27 @@ const tokens = [
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
 
-function populateTokens() {
+async function populateTokens() {
+  provider = new ethers.BrowserProvider(window.ethereum);
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
   inSel.innerHTML = ""; outSel.innerHTML = "";
-  tokens.forEach(t => {
+
+  for (const t of tokens) {
     const opt = document.createElement("option");
     opt.value = JSON.stringify(t);
     opt.innerText = t.symbol;
     inSel.appendChild(opt.cloneNode(true));
     outSel.appendChild(opt.cloneNode(true));
-  });
+
+    if (t.address !== "AVAX") {
+      const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+      tokenDecimals[t.address] = await contract.decimals();
+    } else {
+      tokenDecimals[t.address] = 18;
+    }
+  }
+
   inSel.selectedIndex = 0;
   outSel.selectedIndex = 1;
   updateLogos();
@@ -283,13 +294,13 @@ async function connect() {
   signer = await provider.getSigner();
   router = new ethers.Contract(routerAddress, ABI, signer);
   userAddress = await signer.getAddress();
-  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)" style="margin-left:6px;cursor:pointer;">📋</span>`;
+  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
   document.getElementById("swapBtn").disabled = false;
   updateBalances(); updateEstimate();
 }
 
 function copyAddress(e) {
-  e.stopPropagation(); // prevent connect() from triggering
+  e.stopPropagation();
   navigator.clipboard.writeText(userAddress);
   const icon = e.target;
   icon.innerText = "✅";
@@ -300,13 +311,15 @@ async function updateBalances() {
   if (!userAddress) return;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+
   const getBal = async (t) => {
     if (t.address === "AVAX") return ethers.formatEther(await provider.getBalance(userAddress));
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
-    const dec = await contract.decimals();
+    const dec = tokenDecimals[t.address] || 18;
     return ethers.formatUnits(bal, dec);
   };
+
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
   document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
 }
@@ -315,13 +328,21 @@ async function updateEstimate() {
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
   if (!amt || isNaN(amt)) return;
+
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-  const path = [tokenIn.address === "AVAX" ? WAVAX : tokenIn.address, tokenOut.address === "AVAX" ? WAVAX : tokenOut.address];
+
+  const decIn = tokenDecimals[tokenIn.address] || 18;
+  const decOut = tokenDecimals[tokenOut.address] || 18;
+  const path = [
+    tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
+    tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
+  ];
+
   try {
     const result = await new ethers.Contract(routerAddress, ABI, provider)
-      .getAmountsOut(ethers.parseUnits(amt, 18), path);
-    const est = ethers.formatUnits(result[1], 18);
+      .getAmountsOut(ethers.parseUnits(amt, decIn), path);
+    const est = ethers.formatUnits(result[1], decOut);
     document.getElementById("tokenOutAmount").value = est;
     document.getElementById("estimate").innerText = `Estimated: ≈ ${est} ${tokenOut.symbol}`;
   } catch {
@@ -332,15 +353,22 @@ async function updateEstimate() {
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
   const slippage = parseFloat(document.getElementById("slippage").value);
-  const amountIn = ethers.parseUnits(amt, 18);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+  const decIn = tokenDecimals[tokenIn.address] || 18;
+  const amountIn = ethers.parseUnits(amt, decIn);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
-  const path = [tokenIn.address === "AVAX" ? WAVAX : tokenIn.address, tokenOut.address === "AVAX" ? WAVAX : tokenOut.address];
+  const path = [
+    tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
+    tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
+  ];
+
   try {
     if (tokenIn.address === "AVAX") {
-      const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
+      const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
+        0, path, to, deadline, { value: amountIn }
+      );
       alert("TX sent: " + tx.hash);
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
@@ -359,25 +387,32 @@ async function swap() {
 async function setPercentage(p) {
   if (!provider || !userAddress) return;
   const token = JSON.parse(document.getElementById("tokenInSelect").value);
+  const dec = tokenDecimals[token.address] || 18;
+  let amt;
+
   if (token.address === "AVAX") {
     const bal = await provider.getBalance(userAddress);
-    document.getElementById("tokenInAmount").value = ethers.formatEther(bal * BigInt(p) / 100n);
+    amt = ethers.formatUnits((bal * BigInt(p)) / 100n, dec);
   } else {
     const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
-    const dec = await contract.decimals();
-    const amt = bal * BigInt(p) / 100n;
-    document.getElementById("tokenInAmount").value = ethers.formatUnits(amt, dec);
+    amt = ethers.formatUnits((bal * BigInt(p)) / 100n, dec);
   }
+
+  document.getElementById("tokenInAmount").value = amt;
   updateEstimate();
 }
 
-window.addEventListener("load", () => {
-  populateTokens();
+window.addEventListener("load", async () => {
+  await populateTokens();
   updateBalances();
 });
-document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
-document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
+document.getElementById("tokenInSelect").addEventListener("change", async () => {
+  updateLogos(); await updateBalances(); updateEstimate();
+});
+document.getElementById("tokenOutSelect").addEventListener("change", async () => {
+  updateLogos(); await updateBalances(); updateEstimate();
+});
 </script>
 </body>
 </html>
