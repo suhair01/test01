@@ -165,7 +165,7 @@
     .btn:hover {
       background: #801722;
     }
-   .top-bar {
+  .top-bar {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 8px;
@@ -196,18 +196,11 @@
   display: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.slippage-popup input {
-  background: #2a2a2a;
-  border: none;
-  color: white;
-  padding: 4px 6px;
-  border-radius: 6px;
-  width: 40px;
-  margin-left: 6px;
-  font-size: 13px;
-}
 .slippage-input-wrapper {
   position: relative;
   display: inline-block;
@@ -251,13 +244,16 @@
   <div class="top-bar">
   <div class="settings-wrapper">
     <button class="settings-btn" onclick="toggleSlippage()">⚙️</button>
-    <div class="slippage-input-wrapper">
-  <input id="slippage" value="1" />
-  <span class="percent-label">%</span>
-</div>
-
+    <div class="slippage-popup" id="slippagePopup">
+      <label style="margin-right: 6px;">Slippage:</label>
+      <div class="slippage-input-wrapper">
+        <input id="slippage" value="1" />
+        <span class="percent-label">%</span>
+      </div>
+    </div>
   </div>
 </div>
+
 
     <div class="token-box">
       <div class="token-row">
