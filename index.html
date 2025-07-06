@@ -311,7 +311,6 @@
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
       <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
-      <div id="estimate" style="text-align:right;font-size:12px;color:var(--subtle);margin-top:4px;">Estimated: -</div>
     </div>
 
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
@@ -424,30 +423,30 @@
       document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
     }
 
-    async function updateEstimate() {
-      if (!provider) return;
-      const amt = document.getElementById("tokenInAmount").value;
-      if (!amt || isNaN(amt)) return;
+   async function updateEstimate() {
+  if (!provider) return;
+  const amt = document.getElementById("tokenInAmount").value;
+  if (!amt || isNaN(amt)) return;
 
-      const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-      const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
 
-      const decIn = tokenDecimals[tokenIn.address] || 18;
-      const decOut = tokenDecimals[tokenOut.address] || 18;
-      const path = [
-        tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
-        tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
-      ];
+  const decIn = tokenDecimals[tokenIn.address] || 18;
+  const decOut = tokenDecimals[tokenOut.address] || 18;
+  const path = [
+    tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
+    tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
+  ];
 
-      try {
-        const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
-        const est = ethers.formatUnits(result[1], decOut);
-        document.getElementById("tokenOutAmount").value = est;
-        document.getElementById("estimate").innerText = `Estimated: ≈ ${est} ${tokenOut.symbol}`;
-      } catch {
-        document.getElementById("estimate").innerText = "Estimated: -";
-      }
-    }
+  try {
+    const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
+    const est = ethers.formatUnits(result[1], decOut);
+    document.getElementById("tokenOutAmount").value = est;
+  } catch {
+    document.getElementById("tokenOutAmount").value = "";
+  }
+ }
+
 
     async function swap() {
       const amt = document.getElementById("tokenInAmount").value;
@@ -507,3 +506,4 @@
   </script>
 </body>
 </html>
+
