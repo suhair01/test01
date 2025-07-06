@@ -149,12 +149,6 @@
       justify-content: center;
       cursor: pointer;
     }
-    .slippage-box, .info {
-      font-size: 12px;
-      color: var(--subtle);
-      margin: 6px 0;
-      text-align: center;
-    }
     .btn {
       background: var(--ruby);
       color: white;
@@ -236,9 +230,6 @@
       </div>
       <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
     </div>
-
-    <div class="slippage-box">Slippage: <input id="slippage" value="1" style="width: 50px; text-align:center;">%</div>
-    <div class="info" id="estimate">Estimated: -</div>
 
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
   </div>
