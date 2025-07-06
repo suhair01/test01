@@ -6,11 +6,217 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
   <style>
-    /* CSS here — same as before */
+    :root {
+      --ruby: #9e1c29;
+      --bg: #0e0e0e;
+      --card: #1c1c1c;
+      --text: #ffffff;
+      --subtle: #888;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .header-bar {
+      width: 100%;
+      background: var(--card);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-brand img {
+      height: 28px;
+    }
+    .header-brand span {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--ruby);
+    }
+    .connect-btn {
+      padding: 6px 12px;
+      background: var(--ruby);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .swap-container {
+      background: var(--card);
+      padding: 16px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      margin-top: 20px;
+    }
+    .token-box {
+      background: #141414;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .token-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .token-select {
+      position: relative;
+      flex: 1;
+    }
+    .token-select img {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+    }
+    .token-select select {
+      background: #1f1f1f;
+      color: var(--text);
+      border: none;
+      padding: 8px 8px 8px 34px;
+      border-radius: 10px;
+      font-size: 14px;
+      width: 100%;
+    }
+    .balance {
+      font-size: 11px;
+      color: var(--subtle);
+      margin-left: 10px;
+      white-space: nowrap;
+    }
+    .amount-input {
+      width: 100%;
+      padding: 10px;
+      background: #1f1f1f;
+      border: none;
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px;
+      text-align: right;
+      margin-bottom: 6px;
+    }
+    .percentage-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .percentage-buttons button {
+      flex: 1;
+      padding: 6px;
+      font-size: 12px;
+      background: #2a2a2a;
+      color: white;
+      border: 1px solid var(--ruby);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .percentage-buttons button:hover {
+      background: var(--ruby);
+    }
+    .reverse-btn {
+      width: 32px;
+      height: 32px;
+      margin: 10px auto;
+      background: #222;
+      color: white;
+      border-radius: 50%;
+      border: none;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .slippage-box, .info {
+      font-size: 12px;
+      color: var(--subtle);
+      margin: 6px 0;
+      text-align: center;
+    }
+    .btn {
+      background: var(--ruby);
+      color: white;
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #801722;
+    }
   </style>
 </head>
 <body>
-  <!-- Full HTML layout including header, token selectors, balance fields, inputs, etc. -->
+  <div class="header-bar">
+    <div class="header-brand">
+      <img src="logo.jpg" alt="RubySwap">
+      <span>RubySwap</span>
+    </div>
+    <button class="connect-btn" onclick="connect()">Connect Wallet</button>
+  </div>
+
+  <div class="swap-container">
+    <div class="token-box">
+      <div class="token-row">
+        <div class="token-select">
+          <img id="inLogo" src="">
+          <select id="tokenInSelect"></select>
+        </div>
+        <div class="balance" id="balanceIn">Balance: 0</div>
+      </div>
+      <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate()">
+      <div class="percentage-buttons">
+        <button onclick="setPercentage(25)">25%</button>
+        <button onclick="setPercentage(50)">50%</button>
+        <button onclick="setPercentage(100)">100%</button>
+      </div>
+    </div>
+
+    <button class="reverse-btn" onclick="reverseTokens()">⇅</button>
+
+    <div class="token-box">
+      <div class="token-row">
+        <div class="token-select">
+          <img id="outLogo" src="">
+          <select id="tokenOutSelect"></select>
+        </div>
+        <div class="balance" id="balanceOut">Balance: 0</div>
+      </div>
+      <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
+    </div>
+
+    <div class="slippage-box">Slippage: <input id="slippage" value="1" style="width: 50px; text-align:center;">%</div>
+    <div class="info" id="estimate">Estimated: -</div>
+
+    <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
+  </div>
 
 <script>
 const routerAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
@@ -38,66 +244,10 @@ const tokens = [
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
 
-const coingeckoMap = {
-  "AVAX": "avalanche-2",
-  "ARENA": "arena-token",
-  "USDC": "usd-coin",
-  "WETH": "weth",
-  "JOE": "joe"
-};
-
-let pricesUSD = {};
-let selectedTokens = { in: tokens[0], out: tokens[1] };
-
-async function fetchPrices() {
-  const ids = Object.values(coingeckoMap).join(",");
-  const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-  const data = await res.json();
-  pricesUSD = data;
-}
-
-function getPriceUSD(symbol) {
-  const id = coingeckoMap[symbol];
-  return id && pricesUSD[id] ? pricesUSD[id].usd : null;
-}
-
-async function updateUSDValue(id, token, amount) {
-  const price = getPriceUSD(token.symbol);
-  if (!price || isNaN(amount)) {
-    document.getElementById(id).innerText = "";
-    return;
-  }
-  const usd = (parseFloat(amount) * price).toFixed(2);
-  document.getElementById(id).innerText = `≈ $${usd}`;
-}
-
-async function connect() {
-  if (!window.ethereum) return alert("Install MetaMask");
-  await window.ethereum.request({ method: "eth_requestAccounts" });
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer);
-  userAddress = await signer.getAddress();
-  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)" style="margin-left:6px;cursor:pointer;">📋</span>`;
-  document.getElementById("swapBtn").disabled = false;
-  await fetchPrices();
-  updateBalances();
-  updateEstimate();
-}
-
-function copyAddress(e) {
-  e.stopPropagation();
-  navigator.clipboard.writeText(userAddress);
-  const icon = e.target;
-  icon.innerText = "✅";
-  setTimeout(() => (icon.innerText = "📋"), 1000);
-}
-
 function populateTokens() {
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
-  inSel.innerHTML = "";
-  outSel.innerHTML = "";
+  inSel.innerHTML = ""; outSel.innerHTML = "";
   tokens.forEach(t => {
     const opt = document.createElement("option");
     opt.value = JSON.stringify(t);
@@ -113,7 +263,6 @@ function populateTokens() {
 function updateLogos() {
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-  selectedTokens = { in: tokenIn, out: tokenOut };
   document.getElementById("inLogo").src = tokenIn.logo;
   document.getElementById("outLogo").src = tokenOut.logo;
 }
@@ -124,15 +273,33 @@ function reverseTokens() {
   const tmp = inSel.selectedIndex;
   inSel.selectedIndex = outSel.selectedIndex;
   outSel.selectedIndex = tmp;
-  updateLogos();
-  updateBalances();
-  updateEstimate();
+  updateLogos(); updateBalances(); updateEstimate();
+}
+
+async function connect() {
+  if (!window.ethereum) return alert("Install MetaMask");
+  await window.ethereum.request({ method: "eth_requestAccounts" });
+  provider = new ethers.BrowserProvider(window.ethereum);
+  signer = await provider.getSigner();
+  router = new ethers.Contract(routerAddress, ABI, signer);
+  userAddress = await signer.getAddress();
+  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)" style="margin-left:6px;cursor:pointer;">📋</span>`;
+  document.getElementById("swapBtn").disabled = false;
+  updateBalances(); updateEstimate();
+}
+
+function copyAddress(e) {
+  e.stopPropagation(); // prevent connect() from triggering
+  navigator.clipboard.writeText(userAddress);
+  const icon = e.target;
+  icon.innerText = "✅";
+  setTimeout(() => (icon.innerText = "📋"), 1000);
 }
 
 async function updateBalances() {
   if (!userAddress) return;
-  const tokenIn = selectedTokens.in;
-  const tokenOut = selectedTokens.out;
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const getBal = async (t) => {
     if (t.address === "AVAX") return ethers.formatEther(await provider.getBalance(userAddress));
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
@@ -140,20 +307,16 @@ async function updateBalances() {
     const dec = await contract.decimals();
     return ethers.formatUnits(bal, dec);
   };
-  const inBal = await getBal(tokenIn);
-  const outBal = await getBal(tokenOut);
-  document.getElementById("balanceIn").innerText = "Balance: " + parseFloat(inBal).toFixed(4);
-  document.getElementById("balanceOut").innerText = "Balance: " + parseFloat(outBal).toFixed(4);
-  updateUSDValue("usdInValue", tokenIn, inBal);
-  updateUSDValue("usdOutValue", tokenOut, outBal);
+  document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
+  document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
 }
 
 async function updateEstimate() {
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
   if (!amt || isNaN(amt)) return;
-  const tokenIn = selectedTokens.in;
-  const tokenOut = selectedTokens.out;
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const path = [tokenIn.address === "AVAX" ? WAVAX : tokenIn.address, tokenOut.address === "AVAX" ? WAVAX : tokenOut.address];
   try {
     const result = await new ethers.Contract(routerAddress, ABI, provider)
@@ -161,10 +324,8 @@ async function updateEstimate() {
     const est = ethers.formatUnits(result[1], 18);
     document.getElementById("tokenOutAmount").value = est;
     document.getElementById("estimate").innerText = `Estimated: ≈ ${est} ${tokenOut.symbol}`;
-    updateUSDValue("usdOutValue", tokenOut, est);
   } catch {
     document.getElementById("estimate").innerText = "Estimated: -";
-    document.getElementById("usdOutValue").innerText = "";
   }
 }
 
@@ -172,8 +333,8 @@ async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
   const slippage = parseFloat(document.getElementById("slippage").value);
   const amountIn = ethers.parseUnits(amt, 18);
-  const tokenIn = selectedTokens.in;
-  const tokenOut = selectedTokens.out;
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
   const path = [tokenIn.address === "AVAX" ? WAVAX : tokenIn.address, tokenOut.address === "AVAX" ? WAVAX : tokenOut.address];
@@ -197,27 +358,23 @@ async function swap() {
 
 async function setPercentage(p) {
   if (!provider || !userAddress) return;
-  const token = selectedTokens.in;
+  const token = JSON.parse(document.getElementById("tokenInSelect").value);
   if (token.address === "AVAX") {
     const bal = await provider.getBalance(userAddress);
-    const amt = ethers.formatEther(bal * BigInt(p) / 100n);
-    document.getElementById("tokenInAmount").value = amt;
-    updateUSDValue("usdInValue", token, amt);
+    document.getElementById("tokenInAmount").value = ethers.formatEther(bal * BigInt(p) / 100n);
   } else {
     const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
     const dec = await contract.decimals();
-    const amt = ethers.formatUnits(bal * BigInt(p) / 100n, dec);
-    document.getElementById("tokenInAmount").value = amt;
-    updateUSDValue("usdInValue", token, amt);
+    const amt = bal * BigInt(p) / 100n;
+    document.getElementById("tokenInAmount").value = ethers.formatUnits(amt, dec);
   }
   updateEstimate();
 }
 
 window.addEventListener("load", () => {
   populateTokens();
-  updateLogos();
-  fetchPrices().then(() => updateBalances());
+  updateBalances();
 });
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
