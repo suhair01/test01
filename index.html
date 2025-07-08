@@ -438,22 +438,28 @@ let provider, signer, router, userAddress;
 const tokenDecimals = {};
 
  const tokens = [
-      {
-        symbol: "AVAX",
-        address: "AVAX",
-        logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png"
-      },
-      {
-        symbol: "lambo",
-        address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b",
-        logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png"
-      },
-      {
-        symbol: "ARENA",
-        address: "0xB8d7710f7d8349A506b75dD184F05777c82dAd0C",
-        logo: "https://via.placeholder.com/20x20?text=A"
-      }
-   ];
+  {
+    symbol: "AVAX",
+    address: "AVAX",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png"
+  },
+  {
+    symbol: "USDC",
+    address: ethers.getAddress("0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"),
+    logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png"
+  },
+  {
+    symbol: "ARENA",
+    address: ethers.getAddress("0xb8D7710f7D8349A506B75dD184F05777C82DAD0C"),
+    logo: "https://via.placeholder.com/20x20?text=A"
+  },
+  {
+    symbol: "LAMBO",
+    address: ethers.getAddress("0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b"),
+    logo: "https://via.placeholder.com/20x20?text=L"
+  }
+];
+
 
 async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
@@ -641,9 +647,10 @@ async function swap() {
     }
 
   } catch (err) {
-    console.error(err);
-    showToast("Swap failed: " + (err?.reason || err?.message || "Unknown error"), "error");
-  }
+  console.error(err);
+  showToast("Swap failed: " + (err?.reason || err?.data?.message || err?.error?.message || err?.message || "Unknown error"), "error");
+}
+
 }
 
 function setPercentage(pct) {
