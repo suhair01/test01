@@ -415,15 +415,13 @@
 <div id="toastContainer"></div>
 
   <!-- Script -->
-  <script>
-const routerAddress = "0x6c092461feEA2C91Ee1F6F3BDb942529AcbabA8C";
+<script>
+const routerAddress = "0x606e25641115e721bb4385a1e450b194f34198d0";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
-
 const ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
   "function swapExactTokensForTokensWithFee(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)"
 ];
-
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
   "function approve(address spender, uint256 amount) returns (bool)",
@@ -436,7 +434,7 @@ const tokenDecimals = {};
 
 const tokens = [
   { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-  { symbol: "ARENA", address: "0xB8d7710f7d8349A506b75dD184F05777c82dAd0C", logo: "https://via.placeholder.com/20x20.png?text=A" },
+  { symbol: "ARENA", address: "0xb8d7710f7d8349A506b75dD184F05777c82dAd0C", logo: "https://via.placeholder.com/20x20.png?text=A" },
   { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
   { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
