@@ -1,57 +1,99 @@
 <!DOCTYPE html>
 <html>
-<head><title>RubySwap Debug</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <title>RubyRouter AVAX↔Token</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-<h3>RubySwap Debug</h3>
-<button onclick="connect()">Connect</button><br>
-<input id="amt" placeholder="AVAX amt"><button onclick="test()">Debug Swap</button>
-<pre id="log"></pre>
+  <h2>RubyRouter AVAX Swap</h2>
 
-<script>
-  const arena = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
-  const ruby = "0xd76ac5eee795876f07d89665bf28f0826aa68fd2";
-  const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
-  const USDC = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E";
-  let p, s, you, aC, rC;
+  <label>Swap Direction:</label><br />
+  <select id="direction">
+    <option value="avaxToToken">AVAX → Token</option>
+    <option value="tokenToAvax">Token → AVAX</option>
+  </select><br /><br />
 
-  async function connect(){
-    if (!window.ethereum) return log("❌ No MetaMask");
-    try {
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-      p = new ethers.BrowserProvider(window.ethereum);
-      s = await p.getSigner();
-      you = await s.getAddress();
-      aC = new ethers.Contract(arena, ["function getAmountsOut(uint,address[]) view returns(uint[])"], p);
-      rC = new ethers.Contract(ruby, ["function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint,address[],address,uint) payable"], s);
-      log("✅ Connected: " + you);
-    } catch(e){ log("Err connect: " + e); }
-  }
+  <label>Token Address:</label><br />
+  <input id="token" placeholder="0x..." size="45"/><br />
 
-  async function test(){
-    const v = document.getElementById("amt").value;
-    try {
-      const ai = ethers.parseUnits(v,18);
-      log("AmountIn: " + ai);
+  <label>Amount:</label><br />
+  <input id="amount" placeholder="Enter raw amount (wei)" /><br />
 
-      const out = await aC.getAmountsOut(ai, [WAVAX,USDC]);
-      log("✅ getAmountsOut: " + out);
+  <label>Min Amount Out:</label><br />
+  <input id="amountOutMin" placeholder="Slippage protection" /><br />
 
-      const min = out[1] * BigInt(98) / BigInt(100); // 2% slippage
-      log("minOut: " + min);
-      
-      const tx = await rC.swapExactAVAXForTokensSupportingFeeOnTransferTokens(min, [WAVAX,USDC], you, Math.floor(Date.now()/1e3)+300, { value: ai });
-      log("TX Sent: " + tx.hash);
-      await tx.wait();
-      log("🎉 Swap Mined");
-    } catch(e){
-      log("💥 Error: " + (e.error?.message || e.reason || e.message || e));
-      console.error(e);
+  <button onclick="swap()">Swap</button>
+  <p id="status"></p>
+
+  <script>
+    const routerAddress = "0xB114312a34b55183034cBf8F56A6E89c3a03E544"; // RubyRouter
+    const wavaxAddress = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"; // WAVAX
+
+    const erc20Abi = [
+      "function approve(address spender, uint256 amount) external returns (bool)",
+      "function allowance(address owner, address spender) external view returns (uint256)"
+    ];
+
+    const routerAbi = [
+      "function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable",
+      "function swapExactTokensForAVAXSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external"
+    ];
+
+    async function swap() {
+      const status = document.getElementById("status");
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const user = await signer.getAddress();
+
+        const direction = document.getElementById("direction").value;
+        const token = document.getElementById("token").value;
+        const amount = document.getElementById("amount").value;
+        const amountOutMin = document.getElementById("amountOutMin").value;
+        const deadline = Math.floor(Date.now() / 1000) + 1800;
+
+        const router = new ethers.Contract(routerAddress, routerAbi, signer);
+
+        if (direction === "avaxToToken") {
+          const path = [wavaxAddress, token];
+          const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
+            amountOutMin,
+            path,
+            user,
+            deadline,
+            { value: amount }
+          );
+          status.innerText = "Swapping AVAX for Token...";
+          await tx.wait();
+          status.innerText = "Swap complete!";
+        } else {
+          const path = [token, wavaxAddress];
+          const tokenContract = new ethers.Contract(token, erc20Abi, signer);
+
+          const allowance = await tokenContract.allowance(user, routerAddress);
+          if (BigInt(allowance) < BigInt(amount)) {
+            const approveTx = await tokenContract.approve(routerAddress, amount);
+            status.innerText = "Approving token...";
+            await approveTx.wait();
+          }
+
+          const tx = await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
+            amount,
+            amountOutMin,
+            path,
+            user,
+            deadline
+          );
+          status.innerText = "Swapping Token for AVAX...";
+          await tx.wait();
+          status.innerText = "Swap complete!";
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById("status").innerText = "Error: " + err.message;
+      }
     }
-  }
-
-  function log(m){ document.getElementById("log").innerText += m + "\n" }
-</script>
+  </script>
 </body>
 </html>
