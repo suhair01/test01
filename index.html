@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <link rel="preload" href="https://via.placeholder.com/20x20?text=?" as="image">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
-  
   <style>
     :root {
       --ruby: #ff0000;
@@ -435,7 +434,7 @@ const tokenDecimals = {};
 
 const tokens = [
   { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-  { symbol: "ARENA", address: "0xb8D7710F7D8349A506B75Dd184F05777C82DAD0c", logo: "https://via.placeholder.com/20x20.png?text=A" },
+  { symbol: "ARENA", address: "0xb8d7710f7d8349A506b75dD184F05777c82dAd0C", logo: "https://via.placeholder.com/20x20.png?text=A" },
   { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
   { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
@@ -602,16 +601,14 @@ window.addEventListener("click", function (e) {
 
 window.addEventListener("DOMContentLoaded", populateTokens);
 
-for (const t of tokens) {
-  if (t.address !== "AVAX") {
-    t.address = ethers.getAddress(t.address); // ⬅️ Force proper checksum
-    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-    tokenDecimals[t.address] = await contract.decimals();
-  } else {
-    tokenDecimals[t.address] = 18;
-  }
+function showToast(msg, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerText = msg;
+  const container = document.getElementById('toastContainer') || document.body;
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 3500);
 }
-
 </script>
 
 </body>
