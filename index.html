@@ -1,103 +1,57 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>RubySwap Minimal</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+<head><title>RubySwap Debug</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-  <h2>RubySwap AVAX → USDC Test</h2>
+<h3>RubySwap Debug</h3>
+<button onclick="connect()">Connect</button><br>
+<input id="amt" placeholder="AVAX amt"><button onclick="test()">Debug Swap</button>
+<pre id="log"></pre>
 
-  <button onclick="connect()">Connect Wallet</button><br><br>
+<script>
+  const arena = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
+  const ruby = "0xd76ac5eee795876f07d89665bf28f0826aa68fd2";
+  const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+  const USDC = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E";
+  let p, s, you, aC, rC;
 
-  <label>AVAX Amount:</label><br>
-  <input type="text" id="avaxInput" placeholder="0.1"><br><br>
-
-  <label>Slippage (%):</label><br>
-  <input type="number" id="slippage" value="1"><br><br>
-
-  <button onclick="estimate()">Estimate USDC Out</button><br><br>
-  <div>Estimated USDC: <span id="usdcEstimate">0</span></div><br>
-
-  <button onclick="swap()">Swap</button>
-
-  <div id="log" style="margin-top:30px; color:green;"></div>
-
-  <script>
-    const rubyRouterAddress = "0xd76ac5eee795876f07d89665bf28f0826aa68fd2";
-    const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
-    const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
-    const lambo = "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b";
-
-    let provider, signer, userAddress;
-    let arenaRouter, rubyRouter;
-
-    const ABI = [
-      "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
-      "function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) payable"
-    ];
-
-    async function connect() {
+  async function connect(){
+    if (!window.ethereum) return log("❌ No MetaMask");
+    try {
       await window.ethereum.request({ method: "eth_requestAccounts" });
-      provider = new ethers.BrowserProvider(window.ethereum);
-      signer = await provider.getSigner();
-      userAddress = await signer.getAddress();
-      arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
-      rubyRouter = new ethers.Contract(rubyRouterAddress, ABI, signer);
-      log("Wallet connected: " + userAddress);
+      p = new ethers.BrowserProvider(window.ethereum);
+      s = await p.getSigner();
+      you = await s.getAddress();
+      aC = new ethers.Contract(arena, ["function getAmountsOut(uint,address[]) view returns(uint[])"], p);
+      rC = new ethers.Contract(ruby, ["function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint,address[],address,uint) payable"], s);
+      log("✅ Connected: " + you);
+    } catch(e){ log("Err connect: " + e); }
+  }
+
+  async function test(){
+    const v = document.getElementById("amt").value;
+    try {
+      const ai = ethers.parseUnits(v,18);
+      log("AmountIn: " + ai);
+
+      const out = await aC.getAmountsOut(ai, [WAVAX,USDC]);
+      log("✅ getAmountsOut: " + out);
+
+      const min = out[1] * BigInt(98) / BigInt(100); // 2% slippage
+      log("minOut: " + min);
+      
+      const tx = await rC.swapExactAVAXForTokensSupportingFeeOnTransferTokens(min, [WAVAX,USDC], you, Math.floor(Date.now()/1e3)+300, { value: ai });
+      log("TX Sent: " + tx.hash);
+      await tx.wait();
+      log("🎉 Swap Mined");
+    } catch(e){
+      log("💥 Error: " + (e.error?.message || e.reason || e.message || e));
+      console.error(e);
     }
+  }
 
-    async function estimate() {
-      const amt = document.getElementById("avaxInput").value;
-      if (!amt || isNaN(amt) || parseFloat(amt) <= 0) return log("Invalid input");
-
-      const amountIn = ethers.parseUnits(amt, 18);
-      const path = [WAVAX, USDC];
-
-      try {
-        const result = await arenaRouter.getAmountsOut(amountIn, path);
-        const est = ethers.formatUnits(result[1], 6); // USDC = 6 decimals
-        document.getElementById("usdcEstimate").innerText = est;
-        log("Estimated output: " + est + " USDC");
-      } catch (err) {
-        console.error(err);
-        log("Estimation failed");
-      }
-    }
-
-    async function swap() {
-      const amt = document.getElementById("avaxInput").value;
-      const slippage = parseFloat(document.getElementById("slippage").value || "1");
-
-      if (!userAddress) return log("Connect wallet first");
-      if (!amt || isNaN(amt) || parseFloat(amt) <= 0) return log("Invalid amount");
-
-      const amountIn = ethers.parseUnits(amt, 18);
-      const path = [WAVAX, USDC];
-      const deadline = Math.floor(Date.now() / 1000) + 600;
-
-      try {
-        const out = await arenaRouter.getAmountsOut(amountIn, path);
-        const minOut = out[1] - (out[1] * BigInt(Math.floor(slippage * 100))) / BigInt(10000);
-
-        const tx = await rubyRouter.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
-          minOut,
-          path,
-          userAddress,
-          deadline,
-          { value: amountIn }
-        );
-
-        await tx.wait();
-        log("Swap successful!");
-      } catch (err) {
-        console.error(err);
-        log("Swap failed: " + (err.reason || err.message));
-      }
-    }
-
-    function log(msg) {
-      document.getElementById("log").innerText = msg;
-    }
-  </script>
+  function log(m){ document.getElementById("log").innerText += m + "\n" }
+</script>
 </body>
 </html>
