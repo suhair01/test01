@@ -570,6 +570,12 @@ async function swap() {
   const slippage = parseFloat(document.getElementById("slippage").value);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+
+  if (tokenIn.address === tokenOut.address) {
+    showToast("Choose different tokens", "error");
+    return;
+  }
+
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const amountIn = ethers.parseUnits(amt, decIn);
   const to = userAddress;
@@ -582,7 +588,8 @@ async function swap() {
   try {
     const result = await router.getAmountsOut(amountIn, path);
     const rawOut = result[1];
-    const minOut = rawOut - (rawOut * BigInt(Math.floor(slippage * 100)) / BigInt(10000));
+    const slippagePct = BigInt(Math.floor(slippage * 100));
+    const minOut = rawOut - (rawOut * slippagePct) / BigInt(10000);
 
     if (tokenIn.address === "AVAX") {
       await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
@@ -592,7 +599,8 @@ async function swap() {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
       if (allowance < amountIn) {
-        await tokenContract.approve(routerAddress, ethers.MaxUint256);
+        const tx = await tokenContract.approve(routerAddress, ethers.MaxUint256);
+        await tx.wait();
       }
       if (tokenOut.address === "AVAX") {
         await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
@@ -604,10 +612,14 @@ async function swap() {
         );
       }
     }
+
     showToast("Swap submitted!", "success");
+    updateBalances();
+    updateEstimate();
   } catch (err) {
-    console.error(err);
-    showToast("Swap failed!", "error");
+    console.error("Swap failed:", err);
+    const msg = err?.data?.message || err.message || "Swap failed!";
+    showToast(msg, "error");
   }
 }
 
