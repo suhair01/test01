@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <link rel="preload" href="https://via.placeholder.com/20x20?text=?" as="image">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+  
   <style>
     :root {
       --ruby: #ff0000;
@@ -601,14 +602,16 @@ window.addEventListener("click", function (e) {
 
 window.addEventListener("DOMContentLoaded", populateTokens);
 
-function showToast(msg, type = 'info') {
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerText = msg;
-  const container = document.getElementById('toastContainer') || document.body;
-  container.appendChild(toast);
-  setTimeout(() => { toast.remove(); }, 3500);
+for (const t of tokens) {
+  if (t.address !== "AVAX") {
+    t.address = ethers.getAddress(t.address); // ⬅️ Force proper checksum
+    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+    tokenDecimals[t.address] = await contract.decimals();
+  } else {
+    tokenDecimals[t.address] = 18;
+  }
 }
+
 </script>
 
 </body>
