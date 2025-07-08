@@ -416,213 +416,152 @@
 
   <!-- Script -->
   <script>
- // RubySwap DEX Script with AVAX <-> Token, Token <-> Token, and Token <-> AVAX support + Fee + Slippage
+    
+ const rubyRouterAddress = "0xd76ac5eee795876f07d89665bf28f0826aa68fd2";
+    const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
+    const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
-const routerAddress = "0xd76ac5eee795876f07d89665bf28f0826aa68fd2";
-const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
-const ABI = [
-  "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
-  "function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)",
-  "function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) payable",
-  "function swapExactTokensForAVAXSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)"
-];
+    const ABI = [
+      "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
+      "function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)",
+      "function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) payable",
+      "function swapExactTokensForAVAXSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)"
+    ];
 
-const ERC20_ABI = [
-  "function balanceOf(address) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function decimals() view returns (uint8)"
-];
+    const ERC20_ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function approve(address spender, uint256 amount) returns (bool)",
+      "function allowance(address owner, address spender) view returns (uint256)",
+      "function decimals() view returns (uint8)"
+    ];
 
-let provider, signer, router, userAddress;
-const tokenDecimals = {};
+    const tokens = [
+      { symbol: "AVAX", address: "AVAX" },
+      { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E" },
+      { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c" },
+    ];
 
-const tokens = [
-  { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-  { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "https://via.placeholder.com/20x20.png?text=A" },
-  { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
-  { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
-];
+    let provider, signer, userAddress;
+    let arenaRouter, rubyRouter;
+    const tokenDecimals = {};
 
-window.addEventListener("DOMContentLoaded", async () => {
-  provider = new ethers.BrowserProvider(window.ethereum);
-  router = new ethers.Contract(routerAddress, ABI, provider);
+    window.addEventListener("DOMContentLoaded", async () => {
+      provider = new ethers.BrowserProvider(window.ethereum);
+      arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+      const inSel = document.getElementById("tokenInSelect");
+      const outSel = document.getElementById("tokenOutSelect");
 
-  const inSel = document.getElementById("tokenInSelect");
-  const outSel = document.getElementById("tokenOutSelect");
-  inSel.innerHTML = ""; outSel.innerHTML = "";
+      tokens.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = JSON.stringify(t);
+        opt.innerText = t.symbol;
+        inSel.appendChild(opt.cloneNode(true));
+        outSel.appendChild(opt.cloneNode(true));
+        if (t.address === "AVAX") tokenDecimals[t.address] = 18;
+      });
 
-  for (const t of tokens) {
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify(t);
-    opt.innerText = t.symbol;
-    inSel.appendChild(opt.cloneNode(true));
-    outSel.appendChild(opt.cloneNode(true));
-    if (t.address === "AVAX") tokenDecimals[t.address] = 18;
-  }
+      inSel.selectedIndex = 0;
+      outSel.selectedIndex = 1;
+    });
 
-  inSel.selectedIndex = 0;
-  outSel.selectedIndex = 1;
-  updateLogos();
-});
+    async function connect() {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      userAddress = await signer.getAddress();
+      rubyRouter = new ethers.Contract(rubyRouterAddress, ABI, signer);
 
-function updateLogos() {
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-  document.getElementById("inLogo").src = tokenIn.logo;
-  document.getElementById("outLogo").src = tokenOut.logo;
-}
+      for (const t of tokens) {
+        if (t.address !== "AVAX" && !tokenDecimals[t.address]) {
+          try {
+            const c = new ethers.Contract(t.address, ERC20_ABI, provider);
+            tokenDecimals[t.address] = await c.decimals();
+          } catch { tokenDecimals[t.address] = 18; }
+        }
+      }
 
-function reverseTokens() {
-  const inSel = document.getElementById("tokenInSelect");
-  const outSel = document.getElementById("tokenOutSelect");
-  const tmp = inSel.selectedIndex;
-  inSel.selectedIndex = outSel.selectedIndex;
-  outSel.selectedIndex = tmp;
-  updateLogos();
-  updateBalances();
-  updateEstimate();
-}
+      document.getElementById("swapBtn").disabled = false;
+    }
 
-async function connect() {
-  if (!window.ethereum) return alert("Install MetaMask");
-  await window.ethereum.request({ method: "eth_requestAccounts" });
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer);
-  userAddress = await signer.getAddress();
-  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
-  showToast("Wallet connected!", "success");
+    async function updateEstimate() {
+      const amt = document.getElementById("tokenInAmount").value;
+      if (!amt || isNaN(amt) || parseFloat(amt) <= 0) return;
 
-  for (const t of tokens) {
-    if (t.address !== "AVAX" && !tokenDecimals[t.address]) {
+      const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+      const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+
+      const decIn = tokenDecimals[tokenIn.address] || 18;
+      const decOut = tokenDecimals[tokenOut.address] || 18;
+
+      const path = [
+        tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
+        tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
+      ];
+
       try {
-        const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-        tokenDecimals[t.address] = await contract.decimals();
-      } catch { tokenDecimals[t.address] = 18; }
-    }
-  }
-  document.getElementById("swapBtn").disabled = false;
-  updateBalances();
-  updateEstimate();
-}
-
-function copyAddress(e) {
-  e.stopPropagation();
-  navigator.clipboard.writeText(userAddress);
-  const icon = e.target;
-  icon.innerText = "✅";
-  showToast("Address copied!", "info");
-  setTimeout(() => (icon.innerText = "📋"), 1000);
-}
-
-async function updateBalances() {
-  if (!userAddress) return;
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-
-  const getBal = async (t) => {
-    if (t.address === "AVAX") return ethers.formatEther(await provider.getBalance(userAddress));
-    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-    const bal = await contract.balanceOf(userAddress);
-    const dec = tokenDecimals[t.address] || 18;
-    return ethers.formatUnits(bal, dec);
-  };
-
-  document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
-  document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
-}
-
-async function updateEstimate() {
-  const swapBtn = document.getElementById("swapBtn");
-  if (!provider) return;
-  const amt = document.getElementById("tokenInAmount").value;
-  if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
-    document.getElementById("tokenOutAmount").value = "";
-    swapBtn.disabled = true;
-    return;
-  }
-
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-
-  const decIn = tokenDecimals[tokenIn.address] || 18;
-  const decOut = tokenDecimals[tokenOut.address] || 18;
-  const path = [
-    tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
-    tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
-  ];
-
-  try {
-    const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
-    const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = est;
-    swapBtn.disabled = false;
-  } catch {
-    document.getElementById("tokenOutAmount").value = "";
-    swapBtn.disabled = true;
-  }
-}
-
-async function swap() {
-  const amt = document.getElementById("tokenInAmount").value;
-  const slippage = parseFloat(document.getElementById("slippage").value);
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-
-  if (tokenIn.address === tokenOut.address) {
-    showToast("Choose different tokens", "error");
-    return;
-  }
-
-  const decIn = tokenDecimals[tokenIn.address] || 18;
-  const amountIn = ethers.parseUnits(amt, decIn);
-  const to = userAddress;
-  const deadline = Math.floor(Date.now() / 1000) + 600;
-  const path = [
-    tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
-    tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
-  ];
-
-  try {
-    const result = await router.getAmountsOut(amountIn, path);
-    const rawOut = result[1];
-    const slippagePct = BigInt(Math.floor(slippage * 100));
-    const minOut = rawOut - (rawOut * slippagePct) / BigInt(10000);
-
-    if (tokenIn.address === "AVAX") {
-      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
-        minOut.toString(), path, to, deadline, { value: amountIn }
-      );
-    } else {
-      const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
-      const allowance = await tokenContract.allowance(to, routerAddress);
-      if (allowance < amountIn) {
-        const tx = await tokenContract.approve(routerAddress, ethers.MaxUint256);
-        await tx.wait();
-      }
-      if (tokenOut.address === "AVAX") {
-        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
-          amountIn, minOut.toString(), path, to, deadline
-        );
-      } else {
-        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-          amountIn, minOut.toString(), path, to, deadline
-        );
+        const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
+        const est = ethers.formatUnits(result[1], decOut);
+        document.getElementById("tokenOutAmount").value = est;
+        document.getElementById("swapBtn").disabled = false;
+      } catch (e) {
+        console.error(e);
+        document.getElementById("tokenOutAmount").value = "";
+        document.getElementById("swapBtn").disabled = true;
       }
     }
 
-    showToast("Swap submitted!", "success");
-    updateBalances();
-    updateEstimate();
-  } catch (err) {
-    console.error("Swap failed:", err);
-    const msg = err?.data?.message || err.message || "Swap failed!";
-    showToast(msg, "error");
-  }
-}
+    async function swap() {
+      const amt = document.getElementById("tokenInAmount").value;
+      const slippage = parseFloat(document.getElementById("slippage").value);
+      const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+      const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
 
+      if (tokenIn.address === tokenOut.address) return alert("Select different tokens");
+
+      const decIn = tokenDecimals[tokenIn.address] || 18;
+      const amountIn = ethers.parseUnits(amt, decIn);
+      const to = userAddress;
+      const deadline = Math.floor(Date.now() / 1000) + 600;
+
+      const path = [
+        tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
+        tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
+      ];
+
+      const result = await arenaRouter.getAmountsOut(amountIn, path);
+      const rawOut = result[1];
+      const slippagePct = BigInt(Math.floor(slippage * 100));
+      const minOut = rawOut - (rawOut * slippagePct) / BigInt(10000);
+
+      try {
+        if (tokenIn.address === "AVAX") {
+          await rubyRouter.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
+            minOut.toString(), path, to, deadline, { value: amountIn }
+          );
+        } else {
+          const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
+          const allowance = await tokenContract.allowance(to, rubyRouterAddress);
+          if (allowance < amountIn) {
+            const tx = await tokenContract.approve(rubyRouterAddress, ethers.MaxUint256);
+            await tx.wait();
+          }
+
+          if (tokenOut.address === "AVAX") {
+            await rubyRouter.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
+              amountIn, minOut.toString(), path, to, deadline
+            );
+          } else {
+            await rubyRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+              amountIn, minOut.toString(), path, to, deadline
+            );
+          }
+        }
+        alert("Swap submitted!");
+      } catch (err) {
+        console.error("Swap failed:", err);
+        alert(err.message || "Swap failed!");
+      }
+    }
 function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText;
   const bal = parseFloat(balText.split(":")[1]?.trim());
