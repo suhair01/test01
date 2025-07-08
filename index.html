@@ -434,10 +434,10 @@ const tokenDecimals = {};
 
 const tokens = [
   { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-  { symbol: "ARENA", address: "0xB8D7710f7D8349a506b75Dd184f05777c82DaD0C", logo: "https://via.placeholder.com/20x20.png?text=A" },
-  { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
-  { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
+  { symbol: "ARENA", address: ethers.getAddress("0xb8d7710f7d8349a506b75dd184f05777c82dad0c"), logo: "https://via.placeholder.com/20x20.png?text=A" },
+  { symbol: "USDC", address: ethers.getAddress("0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"), logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
+  { symbol: "WETH", address: ethers.getAddress("0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB"), logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+  { symbol: "LAMBO", address: ethers.getAddress("0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b"), logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
 
 async function populateTokens() {
@@ -521,8 +521,8 @@ async function updateBalances() {
     return ethers.formatUnits(bal, dec);
   };
 
-  document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
-  document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
+  document.getElementById("balanceIn").innerText = "Balance: " + (await getBal(tokenIn)).slice(0, 10);
+  document.getElementById("balanceOut").innerText = "Balance: " + (await getBal(tokenOut)).slice(0, 10);
 }
 
 async function updateEstimate() {
@@ -542,7 +542,7 @@ async function updateEstimate() {
   try {
     const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = est;
+    document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
   } catch {
     document.getElementById("tokenOutAmount").value = "";
   }
@@ -550,6 +550,7 @@ async function updateEstimate() {
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
+  const slippage = parseFloat(document.getElementById("slippage").value) || 1;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
@@ -562,6 +563,9 @@ async function swap() {
   ];
 
   try {
+    const amountsOut = await router.getAmountsOut(amountIn, path);
+    const minAmountOut = amountsOut[1] - (amountsOut[1] * BigInt(Math.floor(slippage * 100)) / 10000n);
+
     if (tokenIn.address !== "AVAX") {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
@@ -570,7 +574,14 @@ async function swap() {
       }
     }
 
-    const tx = await router.swapExactTokensForTokensWithFee(amountIn, 0, path, to, deadline);
+    const tx = await router.swapExactTokensForTokensWithFee(
+      amountIn,
+      minAmountOut,
+      path,
+      to,
+      deadline
+    );
+
     showToast("Swap submitted! TX: " + tx.hash, "success");
   } catch (err) {
     console.error(err);
