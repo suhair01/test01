@@ -535,9 +535,14 @@ async function updateBalances() {
 }
 
 async function updateEstimate() {
+  const swapBtn = document.getElementById("swapBtn");
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
-  if (!amt || isNaN(amt)) return;
+  if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
+    document.getElementById("tokenOutAmount").value = "";
+    swapBtn.disabled = true;
+    return;
+  }
 
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
@@ -553,8 +558,10 @@ async function updateEstimate() {
     const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
     document.getElementById("tokenOutAmount").value = est;
+    swapBtn.disabled = false;
   } catch {
     document.getElementById("tokenOutAmount").value = "";
+    swapBtn.disabled = true;
   }
 }
 
@@ -605,8 +612,9 @@ async function swap() {
 }
 
 function setPercentage(pct) {
-  const balText = document.getElementById("balanceIn").innerText.split(":"[1]);
-  const bal = parseFloat(balText);
+  const balText = document.getElementById("balanceIn").innerText;
+  const bal = parseFloat(balText.split(":")[1]?.trim());
+  if (isNaN(bal)) return;
   const val = (bal * pct / 100).toFixed(6);
   document.getElementById("tokenInAmount").value = val;
   updateEstimate();
