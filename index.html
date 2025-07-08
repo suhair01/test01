@@ -456,13 +456,16 @@ async function populateTokens() {
     inSel.appendChild(opt.cloneNode(true));
     outSel.appendChild(opt.cloneNode(true));
 
-    if (t.address !== "AVAX") {
-      const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-      tokenDecimals[t.address] = await contract.decimals();
-    } else {
-      tokenDecimals[t.address] = 18;
-    }
+    for (const t of tokens) {
+  // FIX: validate checksum using ethers.getAddress()
+  if (t.address !== "AVAX") {
+    t.address = ethers.getAddress(t.address);
+    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+    tokenDecimals[t.address] = await contract.decimals();
+  } else {
+    tokenDecimals[t.address] = 18;
   }
+}
 
   inSel.selectedIndex = 0;
   outSel.selectedIndex = 1;
