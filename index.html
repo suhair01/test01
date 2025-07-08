@@ -326,40 +326,41 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
-      <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
+      <img src="https://via.placeholder.com/40x40.png?text=R" alt="RubySwap Logo" class="logo" />
       <span class="brand-name">RubySwap</span>
     </div>
     <button class="connect-btn" onclick="connect()">Connect Wallet</button>
   </div>
 
-  <!-- Swap UI -->
+  <!-- Main Swap UI -->
   <div class="swap-container">
-   <div class="top-actions">
-  <button class="icon-btn refresh-btn" onclick="location.reload()">
-  <svg xmlns="http://www.w3.org/2000/svg" fill="#666" width="20" height="20" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.22-.37 2.35-1 3.29l1.46 1.46C19.11 15.08 20 13.13 20 11c0-4.42-3.58-8-8-8zm-6.46 2.71C4.89 8.92 4 10.87 4 13c0 4.42 3.58 8 8 8v3l4-4-4-4v3c-3.31 0-6-2.69-6-6 0-1.22.37-2.35 1-3.29L5.54 6.71z"/></svg>
-</button>
-  <div class="settings-wrapper">
-    <button class="icon-btn settings-btn" onclick="toggleSlippage()">⚙️</button>
-    <div class="slippage-popup" id="slippagePopup">
-      <label>Slippage:</label>
-      <div class="slippage-input-wrapper">
-        <input id="slippage" value="1" />
-        <span class="percent-label">%</span>
+    <div class="top-actions">
+      <button class="icon-btn refresh-btn" onclick="location.reload()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="#666" width="20" height="20" viewBox="0 0 24 24">
+          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.22-.37 2.35-1 3.29l1.46 1.46C19.11 15.08 20 13.13 20 11c0-4.42-3.58-8-8-8zm-6.46 2.71C4.89 8.92 4 10.87 4 13c0 4.42 3.58 8 8 8v3l4-4-4-4v3c-3.31 0-6-2.69-6-6 0-1.22.37-2.35 1-3.29L5.54 6.71z"/>
+        </svg>
+      </button>
+      <div class="settings-wrapper">
+        <button class="icon-btn settings-btn" onclick="toggleSlippage()">⚙️</button>
+        <div class="slippage-popup" id="slippagePopup">
+          <label>Slippage:</label>
+          <div class="slippage-input-wrapper">
+            <input id="slippage" value="1" />
+            <span class="percent-label">%</span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
+    <!-- Input Token -->
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-  <img id="inLogo" src="" onerror="this.src='https://via.placeholder.com/20x20?text=?'" />
-  <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
-</div>
-
+          <img id="inLogo" src="https://via.placeholder.com/20x20?text=?" />
+          <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+        </div>
         <div class="balance" id="balanceIn">Balance: 0</div>
       </div>
       <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate()">
@@ -369,18 +370,21 @@
         <button onclick="setPercentage(100)">100%</button>
       </div>
     </div>
+
     <button class="reverse-btn" onclick="reverseTokens()">⇅</button>
+
+    <!-- Output Token -->
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-  <img id="outLogo" src="" onerror="this.src='https://via.placeholder.com/20x20?text=?'" />
-  <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
-</div>
-
+          <img id="outLogo" src="https://via.placeholder.com/20x20?text=?" />
+          <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+        </div>
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
       <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
     </div>
+
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
   </div>
 
@@ -401,7 +405,7 @@
       </div>
       <div class="footer-bottom">
         <div class="footer-brand">
-          <img src="logo.jpg" class="footer-logo" />
+          <img src="https://via.placeholder.com/40x40.png?text=R" class="footer-logo" />
           <div>
             <strong>RubySwap</strong><br />
             <small>Seamless DEX on Avalanche</small>
@@ -412,7 +416,7 @@
     </div>
   </footer>
 
-<div id="toastContainer"></div>
+  <div id="toastContainer"></div>
 
   <!-- Script -->
 <script>
@@ -434,13 +438,23 @@ const ERC20_ABI = [
 let provider, signer, router, userAddress;
 const tokenDecimals = {};
 
-const tokens = [
-  { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-  { symbol: "ARENA", address: "0xb8D7710f7D8349A506B75dD184F05777C82DAD0C", logo: "https://via.placeholder.com/20x20.png?text=A" },
-  { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
-  { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
-];
+ const tokens = [
+      {
+        symbol: "AVAX",
+        address: "AVAX",
+        logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png"
+      },
+      {
+        symbol: "USDC",
+        address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+        logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png"
+      },
+      {
+        symbol: "ARENA",
+        address: "0xb8D7710f7D8349A506B75dD184F05777C82DAD0C",
+        logo: "https://via.placeholder.com/20x20?text=A"
+      }
+   ];
 
 async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
@@ -449,15 +463,15 @@ async function populateTokens() {
   const outSel = document.getElementById("tokenOutSelect");
   inSel.innerHTML = ""; outSel.innerHTML = "";
 
-  for (const t of tokens) {
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify(t);
-    opt.innerText = t.symbol;
-    inSel.appendChild(opt.cloneNode(true));
-    outSel.appendChild(opt.cloneNode(true));
+for (const t of tokens) {
+  const opt = document.createElement("option");
+  opt.value = JSON.stringify(t);
+  opt.innerText = t.symbol;
+  inSel.appendChild(opt.cloneNode(true));
+  outSel.appendChild(opt.cloneNode(true));
+}
 
-    for (const t of tokens) {
-  // FIX: validate checksum using ethers.getAddress()
+for (const t of tokens) {
   if (t.address !== "AVAX") {
     t.address = ethers.getAddress(t.address);
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
@@ -466,6 +480,7 @@ async function populateTokens() {
     tokenDecimals[t.address] = 18;
   }
 }
+
 
   inSel.selectedIndex = 0;
   outSel.selectedIndex = 1;
