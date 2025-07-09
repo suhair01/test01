@@ -1,4 +1,4 @@
-const routerAddress = "0xb1999457d8956ffec9ab2455a20f59c73a9e16f2"; // Your fee router
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
