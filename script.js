@@ -202,3 +202,7 @@ function showToast(msg, type = 'info') {
 
 
 window.connect = connect;
+window.reverseTokens = reverseTokens;
+window.swap = swap;
+window.setPercentage = setPercentage;
+window.toggleSlippage = toggleSlippage;
