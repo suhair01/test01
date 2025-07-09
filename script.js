@@ -100,7 +100,7 @@ async function updateBalances() {
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
     const dec = tokenDecimals[t.address] || 18;
-    return ethers.formatUnits(bal, dec);
+    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
   };
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
@@ -165,8 +165,9 @@ async function swap() {
 }
 
 function setPercentage(pct) {
-  const balText = document.getElementById("balanceIn").innerText.split(":"[1]);
+  const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
+  if (isNaN(bal)) return;
   const val = (bal * pct / 100).toFixed(6);
   document.getElementById("tokenInAmount").value = val;
   updateEstimate();
