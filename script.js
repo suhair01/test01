@@ -1,4 +1,4 @@
-const routerAddress = "0xB114312a34b55183034cBf8F56A6E89c3a03E544";
+const routerAddress = "0xe827569d7fba1fda9ca5cee090d152f21058590d";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 const ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
@@ -96,15 +96,12 @@ async function updateBalances() {
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
 
   const getBal = async (t) => {
-  if (t.address === "AVAX") {
-    const bal = await provider.getBalance(userAddress);
-    return parseFloat(ethers.formatEther(bal)).toFixed(4);
-  }
-  const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-  const bal = await contract.balanceOf(userAddress);
-  const dec = tokenDecimals[t.address] || 18;
-  return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
-};
+    if (t.address === "AVAX") return ethers.formatEther(await provider.getBalance(userAddress));
+    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+    const bal = await contract.balanceOf(userAddress);
+    const dec = tokenDecimals[t.address] || 18;
+    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
+  };
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
   document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
@@ -191,6 +188,13 @@ window.addEventListener("click", function (e) {
 
 window.addEventListener("DOMContentLoaded", populateTokens);
 
+// Expose functions
+window.connect = connect;
+window.reverseTokens = reverseTokens;
+window.swap = swap;
+window.setPercentage = setPercentage;
+window.toggleSlippage = toggleSlippage;
+
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
@@ -203,10 +207,3 @@ function showToast(msg, type = 'info') {
     toast.remove();
   }, 3500);
 }
-
-
-window.connect = connect;
-window.reverseTokens = reverseTokens;
-window.swap = swap;
-window.setPercentage = setPercentage;
-window.toggleSlippage = toggleSlippage;
