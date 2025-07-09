@@ -1,99 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>RubyRouter AVAX↔Token</title>
+  <meta charset="UTF-8" />
+  <title>RubySwap</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-  <h2>RubyRouter AVAX Swap</h2>
+  <!-- Header -->
+  <div class="header-bar">
+    <div class="header-left">
+      <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
+      <span class="brand-name">RubySwap</span>
+    </div>
+    <button class="connect-btn" onclick="connect()">Connect Wallet</button>
+  </div>
 
-  <label>Swap Direction:</label><br />
-  <select id="direction">
-    <option value="avaxToToken">AVAX → Token</option>
-    <option value="tokenToAvax">Token → AVAX</option>
-  </select><br /><br />
+  <!-- Swap UI -->
+  <div class="swap-container">
+    <div class="top-actions">
+      <button class="icon-btn refresh-btn" onclick="location.reload()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="#666" width="20" height="20" viewBox="0 0 24 24">
+          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.22-.37 2.35-1 3.29l1.46 1.46C19.11 15.08 20 13.13 20 11c0-4.42-3.58-8-8-8zm-6.46 2.71C4.89 8.92 4 10.87 4 13c0 4.42 3.58 8 8 8v3l4-4-4-4v3c-3.31 0-6-2.69-6-6 0-1.22.37-2.35 1-3.29L5.54 6.71z"/>
+        </svg>
+      </button>
+      <div class="settings-wrapper">
+        <button class="icon-btn settings-btn" onclick="toggleSlippage()">⚙️</button>
+        <div class="slippage-popup" id="slippagePopup">
+          <label>Slippage:</label>
+          <div class="slippage-input-wrapper">
+            <input id="slippage" value="1" />
+            <span class="percent-label">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <label>Token Address:</label><br />
-  <input id="token" placeholder="0x..." size="45"/><br />
+    <div class="token-box">
+      <div class="token-row">
+        <div class="token-select">
+          <img id="inLogo" src="" onerror="this.src='gold.png'" />
+          <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+        </div>
+        <div class="balance" id="balanceIn">Balance: 0</div>
+      </div>
+      <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
+      <div class="percentage-buttons">
+        <button onclick="setPercentage(25)">25%</button>
+        <button onclick="setPercentage(50)">50%</button>
+        <button onclick="setPercentage(100)">100%</button>
+      </div>
+    </div>
 
-  <label>Amount:</label><br />
-  <input id="amount" placeholder="Enter raw amount (wei)" /><br />
+    <button class="reverse-btn" onclick="reverseTokens()">⇅</button>
 
-  <label>Min Amount Out:</label><br />
-  <input id="amountOutMin" placeholder="Slippage protection" /><br />
+    <div class="token-box">
+      <div class="token-row">
+        <div class="token-select">
+          <img id="outLogo" src="" onerror="this.src='gold.png'" />
+          <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+        </div>
+        <div class="balance" id="balanceOut">Balance: 0</div>
+      </div>
+      <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
+    </div>
 
-  <button onclick="swap()">Swap</button>
-  <p id="status"></p>
+    <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
+  </div>
 
-  <script>
-    const routerAddress = "0xB114312a34b55183034cBf8F56A6E89c3a03E544"; // RubyRouter
-    const wavaxAddress = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"; // WAVAX
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-top">
+        <div class="socials">
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png" alt="Discord" /></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" /></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub" /></a>
+        </div>
+        <div class="footer-links">
+          <a href="#">Documents</a>
+          <a href="#">Listings</a>
+          <a href="#">Support</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="footer-brand">
+          <img src="logo.jpg" class="footer-logo" />
+          <div>
+            <strong>RubySwap</strong><br />
+            <small>Seamless DEX on Avalanche</small>
+          </div>
+        </div>
+        <div class="legal">© RubySwap 2025 · Legal Disclaimer</div>
+      </div>
+    </div>
+  </footer>
 
-    const erc20Abi = [
-      "function approve(address spender, uint256 amount) external returns (bool)",
-      "function allowance(address owner, address spender) external view returns (uint256)"
-    ];
+  <div id="toastContainer"></div>
 
-    const routerAbi = [
-      "function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable",
-      "function swapExactTokensForAVAXSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external"
-    ];
-
-    async function swap() {
-      const status = document.getElementById("status");
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        const user = await signer.getAddress();
-
-        const direction = document.getElementById("direction").value;
-        const token = document.getElementById("token").value;
-        const amount = document.getElementById("amount").value;
-        const amountOutMin = document.getElementById("amountOutMin").value;
-        const deadline = Math.floor(Date.now() / 1000) + 1800;
-
-        const router = new ethers.Contract(routerAddress, routerAbi, signer);
-
-        if (direction === "avaxToToken") {
-          const path = [wavaxAddress, token];
-          const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
-            amountOutMin,
-            path,
-            user,
-            deadline,
-            { value: amount }
-          );
-          status.innerText = "Swapping AVAX for Token...";
-          await tx.wait();
-          status.innerText = "Swap complete!";
-        } else {
-          const path = [token, wavaxAddress];
-          const tokenContract = new ethers.Contract(token, erc20Abi, signer);
-
-          const allowance = await tokenContract.allowance(user, routerAddress);
-          if (BigInt(allowance) < BigInt(amount)) {
-            const approveTx = await tokenContract.approve(routerAddress, amount);
-            status.innerText = "Approving token...";
-            await approveTx.wait();
-          }
-
-          const tx = await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
-            amount,
-            amountOutMin,
-            path,
-            user,
-            deadline
-          );
-          status.innerText = "Swapping Token for AVAX...";
-          await tx.wait();
-          status.innerText = "Swap complete!";
-        }
-      } catch (err) {
-        console.error(err);
-        document.getElementById("status").innerText = "Error: " + err.message;
-      }
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
