@@ -96,12 +96,15 @@ async function updateBalances() {
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
 
   const getBal = async (t) => {
-    if (t.address === "AVAX") return ethers.formatEther(await provider.getBalance(userAddress));
-    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-    const bal = await contract.balanceOf(userAddress);
-    const dec = tokenDecimals[t.address] || 18;
-    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
-  };
+  if (t.address === "AVAX") {
+    const bal = await provider.getBalance(userAddress);
+    return parseFloat(ethers.formatEther(bal)).toFixed(4);
+  }
+  const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+  const bal = await contract.balanceOf(userAddress);
+  const dec = tokenDecimals[t.address] || 18;
+  return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
+};
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
   document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
