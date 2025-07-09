@@ -1,4 +1,4 @@
-const routerAddress = "0x42f1f3f71699280c4475e05513dda48849877f73";
+const routerAddress = "0xb1999457d8956ffec9ab2455a20f59c73a9e16f2";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 const ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
