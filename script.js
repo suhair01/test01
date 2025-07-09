@@ -400,3 +400,4 @@ function showToast(msg, type = 'info') {
     toast.remove();
   }, 3500);
 }
+window.connect = connect;
