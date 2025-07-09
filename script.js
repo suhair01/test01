@@ -196,6 +196,21 @@ window.addEventListener("click", function (e) {
 });
 
 window.addEventListener("DOMContentLoaded", populateTokens);
+// 🔁 Trigger estimation when user types amount or changes token
+document.getElementById("tokenInAmount").addEventListener("input", updateEstimate);
+
+document.getElementById("tokenInSelect").addEventListener("change", () => {
+  updateLogos();
+  updateBalances();
+  updateEstimate();
+});
+
+document.getElementById("tokenOutSelect").addEventListener("change", () => {
+  updateLogos();
+  updateBalances();
+  updateEstimate();
+});
+
 
 // Expose functions
 window.connect = connect;
