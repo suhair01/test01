@@ -125,11 +125,12 @@ async function updateEstimate() {
   try {
     const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = est;
+    document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
   } catch {
     document.getElementById("tokenOutAmount").value = "";
   }
 }
+
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
