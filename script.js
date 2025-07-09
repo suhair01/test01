@@ -125,14 +125,19 @@ async function updateEstimate() {
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
   ];
 
+  // 🔍 Debug log
+  console.log("Estimate input:", amt, "Decimals:", decIn, "→", decOut, "Path:", path);
+
   try {
     const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
     document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
-  } catch {
+  } catch (err) {
+    console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
   }
 }
+
 
 
 async function swap() {
