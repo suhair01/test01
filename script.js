@@ -22,7 +22,7 @@ const tokenDecimals = {};
 const tokens = [
   { symbol: "AVAX", address: "AVAX", logo: "avaxlogo.png" },
   { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "arenalogo.png" },
-  { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
+  { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "lambo.png" },
   { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
@@ -31,6 +31,7 @@ async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
   router = new ethers.Contract(routerAddress, ABI, provider);
   arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
   inSel.innerHTML = ""; outSel.innerHTML = "";
@@ -53,6 +54,7 @@ async function populateTokens() {
   inSel.selectedIndex = 0;
   outSel.selectedIndex = 1;
   updateLogos();
+  document.getElementById("tokenInAmount").setAttribute("step", (1 / 10 ** 18).toFixed(18));
 }
 
 function updateLogos() {
@@ -76,8 +78,8 @@ async function connect() {
   await window.ethereum.request({ method: "eth_requestAccounts" });
   provider = new ethers.BrowserProvider(window.ethereum);
   signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
-  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
+  router = new ethers.Contract(routerAddress, ABI, signer);
+  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
   userAddress = await signer.getAddress();
   document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
   showToast("Wallet connected!", "success");
@@ -116,21 +118,29 @@ async function updateBalances() {
 
 async function updateEstimate() {
   if (!provider) return;
-  const amt = document.getElementById("tokenInAmount").value;
-  if (!amt || isNaN(amt)) return;
+  const amtRaw = document.getElementById("tokenInAmount").value.trim();
+  if (!amtRaw || isNaN(amtRaw)) return;
 
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const decOut = tokenDecimals[tokenOut.address] || 18;
+
+  const parts = amtRaw.split(".");
+  if (parts[1] && parts[1].length > decIn) {
+    showToast(`Too many decimals for ${tokenIn.symbol} (max ${decIn})`, "error");
+    document.getElementById("tokenOutAmount").value = "";
+    return;
+  }
+
+  const amt = Number(amtRaw).toFixed(decIn);
   const path = [
     tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
   ];
 
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
+    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
     document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
   } catch (err) {
@@ -140,14 +150,22 @@ async function updateEstimate() {
 }
 
 async function swap() {
-  const amt = document.getElementById("tokenInAmount").value;
-  const slippage = parseFloat(document.getElementById("slippage").value);
+  const amtRaw = document.getElementById("tokenInAmount").value.trim();
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
-  const amountIn = ethers.parseUnits(amt, decIn);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
+
+  const parts = amtRaw.split(".");
+  if (parts[1] && parts[1].length > decIn) {
+    showToast(`Too many decimals for ${tokenIn.symbol} (max ${decIn})`, "error");
+    return;
+  }
+
+  const amt = Number(amtRaw).toFixed(decIn);
+  const amountIn = ethers.parseUnits(amt, decIn);
+
   const path = [
     tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
