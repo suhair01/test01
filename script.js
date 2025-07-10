@@ -20,8 +20,8 @@ let provider, signer, router, arenaRouter, userAddress;
 const tokenDecimals = {};
 
 const tokens = [
-  { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-  { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "https://via.placeholder.com/20x20.png?text=A" },
+  { symbol: "AVAX", address: "AVAX", logo: "avaxlogo.png" },
+  { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "arenalogo.png" },
   { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
   { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
