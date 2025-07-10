@@ -153,7 +153,7 @@ async function swap() {
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const amountIn = ethers.parseUnits(amtRaw, decIn);
 
-  const minThreshold = ethers.parseUnits("0.0001", decIn);
+  const minThreshold = ethers.parseUnits("0.000001", decIn);
   if (amountIn < minThreshold) {
     showToast("Swap amount is too small. Please enter a larger amount.", "error");
     return;
