@@ -141,12 +141,24 @@ async function updateEstimate() {
 }
 
 async function swap() {
-  const amt = document.getElementById("tokenInAmount").value;
+  const amtRaw = document.getElementById("tokenInAmount").value;
+  if (!amtRaw || isNaN(amtRaw) || parseFloat(amtRaw) === 0) {
+    showToast("Please enter a valid amount", "error");
+    return;
+  }
+
   const slippage = parseFloat(document.getElementById("slippage").value);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
-  const amountIn = ethers.parseUnits(amt, decIn);
+  const amountIn = ethers.parseUnits(amtRaw, decIn);
+
+  const minThreshold = ethers.parseUnits("0.000001", decIn);
+  if (amountIn < minThreshold) {
+    showToast("Swap amount is too small. Please enter a larger amount.", "error");
+    return;
+  }
+
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
   const path = [
@@ -156,17 +168,18 @@ async function swap() {
 
   try {
     if (tokenIn.address === "AVAX") {
-      const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
-      showToast("Swap submitted!", "success");
+      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
       if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
-      const tx = tokenOut.address === "AVAX"
-        ? await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline)
-        : await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
-      showToast("Swap submitted!", "success");
+      if (tokenOut.address === "AVAX") {
+        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      } else {
+        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      }
     }
+    showToast("Swap submitted!", "success");
   } catch (err) {
     console.error(err);
     showToast("Swap failed!", "error");
