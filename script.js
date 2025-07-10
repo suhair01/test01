@@ -1,3 +1,4 @@
+<script>
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
@@ -82,7 +83,6 @@ async function connect() {
   userAddress = await signer.getAddress();
   document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
   showToast("Wallet connected!", "success");
-
   document.getElementById("swapBtn").disabled = false;
   updateBalances(); updateEstimate();
 }
@@ -125,18 +125,35 @@ async function updateEstimate() {
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const decOut = tokenDecimals[tokenOut.address] || 18;
 
+  let amountIn;
+  try {
+    amountIn = ethers.parseUnits(amtRaw, decIn);
+  } catch {
+    document.getElementById("tokenOutAmount").value = "";
+    return;
+  }
+
+  const minThreshold = ethers.parseUnits("0.000001", decIn);
+  if (amountIn < minThreshold) {
+    document.getElementById("tokenOutAmount").value = "0.0000";
+    document.getElementById("swapBtn").disabled = true;
+    return;
+  }
+
   const path = [
     tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
   ];
 
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amtRaw, decIn), path);
+    const result = await arenaRouter.getAmountsOut(amountIn, path);
     const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = Number(est).toFixed(4);
+    document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
+    document.getElementById("swapBtn").disabled = false;
   } catch (err) {
-    console.error("Estimation failed:", err);
+    console.error("Estimation failed:", err.reason || err);
     document.getElementById("tokenOutAmount").value = "";
+    document.getElementById("swapBtn").disabled = true;
   }
 }
 
@@ -151,6 +168,12 @@ async function swap() {
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
 
+  const minThreshold = ethers.parseUnits("0.000001", decIn);
+  if (amountIn < minThreshold) {
+    showToast("Amount too small", "error");
+    return;
+  }
+
   const path = [
     tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
@@ -158,9 +181,7 @@ async function swap() {
 
   try {
     if (tokenIn.address === "AVAX") {
-      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
-        0, path, to, deadline, { value: amountIn }
-      );
+      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
@@ -223,3 +244,4 @@ function showToast(msg, type = 'info') {
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
 }
+</script>
