@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Avalyfi</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Avaly</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
-  <script src="https://unpkg.com/@walletconnect/ethereum-provider@2.4.0/dist/umd/index.min.js"></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -18,13 +17,9 @@
         <button class="close-modal" onclick="closeModal()">&times;</button>
       </div>
       <div class="wallet-options">
-        <button class="wallet-option" onclick="connectWallet('metamask')">
+        <button class="wallet-option" onclick="connectWallet()">
           <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask">
           <span>MetaMask</span>
-        </button>
-        <button class="wallet-option" onclick="connectWallet('walletconnect')">
-          <img src="https://altcoinsbox.com/wp-content/uploads/2023/03/wallet-connect-logo.png" alt="WalletConnect">
-          <span>WalletConnect</span>
         </button>
       </div>
     </div>
@@ -33,7 +28,7 @@
   <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
-      <img src="logo.jpg" alt="Avalyfi Logo" class="logo" />
+      <img src="logo.jpg" alt="Avalyfi Logo" class="logo">
       <span class="brand-name">Avaly</span>
     </div>
     <button class="connect-btn" onclick="openModal()">Connect Wallet</button>
@@ -52,7 +47,7 @@
         <div class="slippage-popup" id="slippagePopup">
           <label>Slippage:</label>
           <div class="slippage-input-wrapper">
-            <input id="slippage" value="1" />
+            <input id="slippage" value="1">
             <span class="percent-label">%</span>
           </div>
         </div>
@@ -62,7 +57,7 @@
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-          <img id="inLogo" src="" onerror="this.src='default-token.png'" />
+          <img id="inLogo" src="" onerror="this.src='default-token.png'">
           <select id="tokenInSelect"></select>
         </div>
         <div class="balance" id="balanceIn">Balance: 0</div>
@@ -80,7 +75,7 @@
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-          <img id="outLogo" src="" onerror="this.src='default-token.png'" />
+          <img id="outLogo" src="" onerror="this.src='default-token.png'">
           <select id="tokenOutSelect"></select>
         </div>
         <div class="balance" id="balanceOut">Balance: 0</div>
@@ -96,9 +91,9 @@
     <div class="footer-content">
       <div class="footer-top">
         <div class="socials">
-          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png" alt="Discord" /></a>
-          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" /></a>
-          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub" /></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png" alt="Discord"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub"></a>
         </div>
         <div class="footer-links">
           <a href="#">Documents</a>
@@ -108,9 +103,9 @@
       </div>
       <div class="footer-bottom">
         <div class="footer-brand">
-          <img src="logo.jpg" class="footer-logo" />
+          <img src="logo.jpg" class="footer-logo">
           <div>
-            <strong>Avaly</strong><br />
+            <strong>Avaly</strong><br>
             <small>Seamless DEX on Avalanche</small>
           </div>
         </div>
