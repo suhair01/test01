@@ -1,5 +1,5 @@
-const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
-const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
+const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
 const ABI = [
@@ -171,7 +171,6 @@ async function updateEstimate() {
 /* Swap Execution */
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
-  const slippage = parseFloat(document.getElementById("slippage").value);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
