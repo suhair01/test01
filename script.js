@@ -181,10 +181,17 @@ function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
   if (isNaN(bal)) return;
-  const val = (bal * pct / 100).toFixed(6);
-  document.getElementById("tokenInAmount").value = val;
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const val = (bal * pct / 100);
+
+  document.getElementById("tokenInAmount").value =
+    tokenIn.address === "AVAX"
+      ? parseFloat(val).toFixed(4)
+      : Math.floor(parseFloat(val));
+
   updateEstimate();
 }
+
 
 function toggleSlippage() {
   const popup = document.getElementById("slippagePopup");
