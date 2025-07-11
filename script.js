@@ -1,6 +1,6 @@
-
-const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
-const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
+<script>
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
+const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
 const ABI = [
@@ -27,6 +27,13 @@ const tokens = [
   { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
+
+function formatAmount(amount, isAVAX = false) {
+  const num = parseFloat(amount);
+  if (isNaN(num)) return "";
+  if (isAVAX) return num.toFixed(6).replace(/\.?0+$/, "");
+  return Math.floor(num).toString();
+}
 
 async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
@@ -77,12 +84,11 @@ async function connect() {
   await window.ethereum.request({ method: "eth_requestAccounts" });
   provider = new ethers.BrowserProvider(window.ethereum);
   signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
-  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
+  router = new ethers.Contract(routerAddress, ABI, signer);
+  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
   userAddress = await signer.getAddress();
   document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
   showToast("Wallet connected!", "success");
-
   document.getElementById("swapBtn").disabled = false;
   updateBalances(); updateEstimate();
 }
@@ -103,12 +109,12 @@ async function updateBalances() {
 
   const getBal = async (t) => {
     if (t.address === "AVAX") {
-      return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
+      return formatAmount(ethers.formatEther(await provider.getBalance(userAddress)), true);
     }
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
     const dec = tokenDecimals[t.address] || 18;
-    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
+    return formatAmount(ethers.formatUnits(bal, dec), false);
   };
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
@@ -131,9 +137,9 @@ async function updateEstimate() {
   ];
 
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
-    const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
+    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
+    let est = ethers.formatUnits(result[1], decOut);
+    document.getElementById("tokenOutAmount").value = formatAmount(est, tokenOut.address === "AVAX");
   } catch (err) {
     console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
@@ -142,7 +148,6 @@ async function updateEstimate() {
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
-  const slippage = parseFloat(document.getElementById("slippage").value);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
@@ -156,17 +161,18 @@ async function swap() {
 
   try {
     if (tokenIn.address === "AVAX") {
-      const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
-      showToast("Swap submitted!", "success");
+      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
       if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
-      const tx = tokenOut.address === "AVAX"
-        ? await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline)
-        : await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
-      showToast("Swap submitted!", "success");
+      if (tokenOut.address === "AVAX") {
+        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      } else {
+        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      }
     }
+    showToast("Swap submitted!", "success");
   } catch (err) {
     console.error(err);
     showToast("Swap failed!", "error");
@@ -174,11 +180,16 @@ async function swap() {
 }
 
 function setPercentage(pct) {
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
   if (isNaN(bal)) return;
-  const val = (bal * pct / 100).toFixed(6);
-  document.getElementById("tokenInAmount").value = val;
+  let val = bal * pct / 100;
+  if (tokenIn.address !== "AVAX") {
+    val = Math.floor(val);
+    showToast(`Decimals removed: rounded down to ${val}`, "info");
+  }
+  document.getElementById("tokenInAmount").value = formatAmount(val, tokenIn.address === "AVAX");
   updateEstimate();
 }
 
@@ -186,6 +197,29 @@ function toggleSlippage() {
   const popup = document.getElementById("slippagePopup");
   popup.style.display = popup.style.display === "block" ? "none" : "block";
 }
+
+document.getElementById("tokenInAmount").addEventListener("input", () => {
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const inputEl = document.getElementById("tokenInAmount");
+  let value = inputEl.value;
+  const parsed = parseFloat(value);
+  if (!isNaN(parsed) && tokenIn.address !== "AVAX") {
+    const rounded = Math.floor(parsed);
+    if (parsed !== rounded) {
+      inputEl.value = rounded;
+      showToast(`Decimals removed: rounded down to ${rounded}`, "info");
+    }
+  }
+  updateEstimate();
+});
+
+document.getElementById("tokenInAmount").addEventListener("keypress", (e) => {
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  if (tokenIn.address !== "AVAX" && (e.key === '.' || e.key === ',')) {
+    e.preventDefault();
+    showToast("Decimals not allowed for this token", "error");
+  }
+});
 
 window.addEventListener("click", function (e) {
   const popup = document.getElementById("slippagePopup");
@@ -196,23 +230,6 @@ window.addEventListener("click", function (e) {
 });
 
 window.addEventListener("DOMContentLoaded", populateTokens);
-document.getElementById("tokenInAmount").addEventListener("input", () => {
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const inputEl = document.getElementById("tokenInAmount");
-  let value = inputEl.value;
-
-  if (tokenIn.address !== "AVAX") {
-    const parsed = parseFloat(value);
-    if (!isNaN(parsed) && parsed % 1 !== 0) {
-      const rounded = Math.floor(parsed);
-      inputEl.value = rounded;
-      showToast(`Decimals removed: rounded down to ${rounded}`, "info");
-    }
-  }
-
-  updateEstimate();
-});
-
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 
@@ -226,11 +243,8 @@ function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.innerText = msg;
-
   const container = document.getElementById('toastContainer');
   container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3500);
+  setTimeout(() => toast.remove(), 3500);
 }
+</script>
