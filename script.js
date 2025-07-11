@@ -141,33 +141,12 @@ async function updateEstimate() {
 }
 
 async function swap() {
-  const amtRaw = document.getElementById("tokenInAmount").value.trim();
-  if (!amtRaw || isNaN(amtRaw) || parseFloat(amtRaw) === 0) {
-    showToast("Please enter a valid amount", "error");
-    return;
-  }
-
+  const amt = document.getElementById("tokenInAmount").value;
+  const slippage = parseFloat(document.getElementById("slippage").value);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
-  const amountIn = ethers.parseUnits(amtRaw, decIn);
-
-  // ✅ Validation
-  if (tokenIn.address === "AVAX") {
-    const minAVAX = ethers.parseUnits("0.000001", 18);
-    if (amountIn.lt(minAVAX)) {
-      showToast("AVAX amount too small. Minimum is 0.000001", "error");
-      return;
-    }
-  } else {
-    const minToken = ethers.parseUnits("1", decIn);
-    if (amountIn.lt(minToken)) {
-      showToast(`Minimum swap is 1 ${tokenIn.symbol}`, "error");
-      return;
-    }
-  }
-
-  const slippage = parseFloat(document.getElementById("slippage").value);
+  const amountIn = ethers.parseUnits(amt, decIn);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
   const path = [
