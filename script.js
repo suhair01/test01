@@ -1,4 +1,3 @@
-
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
@@ -28,6 +27,54 @@ const tokens = [
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
 
+/* Wallet Connection Functions */
+function openModal() {
+  document.getElementById('walletModal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('walletModal').style.display = 'none';
+}
+
+async function connectWallet(walletType) {
+  closeModal();
+  
+  if (walletType === 'metamask') {
+    if (!window.ethereum) {
+      showToast("Please install MetaMask!", "error");
+      return;
+    }
+    await connectMetaMask();
+  } else {
+    showToast(`${walletType} not implemented yet`, "error");
+  }
+}
+
+async function connectMetaMask() {
+  try {
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    signer = await provider.getSigner();
+    router = new ethers.Contract(routerAddress, ABI, signer);
+    arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+    userAddress = await signer.getAddress();
+    
+    document.querySelector(".connect-btn").innerHTML = `
+      <span class="wallet-address">${userAddress.slice(0, 6)}...${userAddress.slice(-4)}</span>
+      <span class="copy-icon" onclick="copyAddress(event)">📋</span>
+    `;
+    
+    showToast("Wallet connected!", "success");
+    document.getElementById("swapBtn").disabled = false;
+    updateBalances(); 
+    updateEstimate();
+  } catch (err) {
+    console.error(err);
+    showToast("Connection failed!", "error");
+  }
+}
+
+/* Token Functions */
 async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
   router = new ethers.Contract(routerAddress, ABI, provider);
@@ -72,30 +119,7 @@ function reverseTokens() {
   updateLogos(); updateBalances(); updateEstimate();
 }
 
-async function connect() {
-  if (!window.ethereum) return alert("Install MetaMask");
-  await window.ethereum.request({ method: "eth_requestAccounts" });
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
-  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
-  userAddress = await signer.getAddress();
-  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
-  showToast("Wallet connected!", "success");
-
-  document.getElementById("swapBtn").disabled = false;
-  updateBalances(); updateEstimate();
-}
-
-function copyAddress(e) {
-  e.stopPropagation();
-  navigator.clipboard.writeText(userAddress);
-  const icon = e.target;
-  icon.innerText = "✅";
-  showToast("Address copied!", "info");
-  setTimeout(() => (icon.innerText = "📋"), 1000);
-}
-
+/* Balance Functions */
 async function updateBalances() {
   if (!userAddress) return;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
@@ -115,6 +139,7 @@ async function updateBalances() {
   document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
 }
 
+/* Swap Estimation */
 async function updateEstimate() {
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
@@ -131,19 +156,19 @@ async function updateEstimate() {
   ];
 
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
+    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
-  document.getElementById("tokenOutAmount").value =
-  tokenOut.address === "AVAX"
-    ? parseFloat(est).toFixed(4)
-    : Math.floor(parseFloat(est));
-
+    document.getElementById("tokenOutAmount").value =
+      tokenOut.address === "AVAX"
+        ? parseFloat(est).toFixed(4)
+        : Math.floor(parseFloat(est));
   } catch (err) {
     console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
   }
 }
 
+/* Swap Execution */
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
   const slippage = parseFloat(document.getElementById("slippage").value);
@@ -177,6 +202,7 @@ async function swap() {
   }
 }
 
+/* Helper Functions */
 function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
@@ -192,16 +218,39 @@ function setPercentage(pct) {
   updateEstimate();
 }
 
+function copyAddress(e) {
+  e.stopPropagation();
+  navigator.clipboard.writeText(userAddress);
+  const icon = e.target;
+  icon.innerText = "✅";
+  showToast("Address copied!", "info");
+  setTimeout(() => (icon.innerText = "📋"), 1000);
+}
 
 function toggleSlippage() {
   const popup = document.getElementById("slippagePopup");
   popup.style.display = popup.style.display === "block" ? "none" : "block";
 }
 
+/* Toast Notifications */
+function showToast(msg, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerText = msg;
+
+  const container = document.getElementById('toastContainer');
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3500);
+}
+
+/* Event Listeners */
 window.addEventListener("click", function (e) {
   const popup = document.getElementById("slippagePopup");
   const btn = document.querySelector(".settings-btn");
-  if (!popup.contains(e.target) && !btn.contains(e.target)) {
+  if (popup && btn && !popup.contains(e.target) && !btn.contains(e.target)) {
     popup.style.display = "none";
   }
 });
@@ -238,21 +287,13 @@ document.getElementById("tokenInAmount").addEventListener("input", function (e) 
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 
-window.connect = connect;
+/* Global Exports */
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.connectWallet = connectWallet;
+window.connect = openModal;
 window.reverseTokens = reverseTokens;
 window.swap = swap;
 window.setPercentage = setPercentage;
 window.toggleSlippage = toggleSlippage;
-
-function showToast(msg, type = 'info') {
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerText = msg;
-
-  const container = document.getElementById('toastContainer');
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3500);
-}
+window.copyAddress = copyAddress;
