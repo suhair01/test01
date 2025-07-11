@@ -152,16 +152,16 @@ async function swap() {
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const amountIn = ethers.parseUnits(amtRaw, decIn);
 
-  // 🔒 Check amount minimums
+  // ✅ Validation
   if (tokenIn.address === "AVAX") {
     const minAVAX = ethers.parseUnits("0.000001", 18);
-    if (amountIn < minAVAX) {
+    if (amountIn.lt(minAVAX)) {
       showToast("AVAX amount too small. Minimum is 0.000001", "error");
       return;
     }
   } else {
     const minToken = ethers.parseUnits("1", decIn);
-    if (amountIn < minToken) {
+    if (amountIn.lt(minToken)) {
       showToast(`Minimum swap is 1 ${tokenIn.symbol}`, "error");
       return;
     }
@@ -182,22 +182,17 @@ async function swap() {
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
-      if (allowance < amountIn) {
-        await tokenContract.approve(routerAddress, ethers.MaxUint256);
-      }
-
+      if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
       const tx = tokenOut.address === "AVAX"
         ? await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline)
         : await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
-
       showToast("Swap submitted!", "success");
     }
   } catch (err) {
-    console.error("Swap error:", err);
+    console.error(err);
     showToast("Swap failed!", "error");
   }
 }
-
 
 function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
