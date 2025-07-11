@@ -147,18 +147,26 @@ async function swap() {
     return;
   }
 
-  const slippage = parseFloat(document.getElementById("slippage").value);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const amountIn = ethers.parseUnits(amtRaw, decIn);
 
-  const minThreshold = ethers.parseUnits("0.000001", decIn);
-  if (amountIn < minThreshold) {
-    showToast("Swap amount is too small. Please enter a larger amount.", "error");
-    return;
+  if (tokenIn.address === "AVAX") {
+    const minAVAX = ethers.parseUnits("0.000001", decIn);
+    if (amountIn < minAVAX) {
+      showToast("AVAX amount too small. Minimum: 0.000001 AVAX", "error");
+      return;
+    }
+  } else {
+    const minToken = ethers.parseUnits("1", decIn);
+    if (amountIn < minToken) {
+      showToast(`Minimum swap is 1 ${tokenIn.symbol}`, "error");
+      return;
+    }
   }
 
+  const slippage = parseFloat(document.getElementById("slippage").value);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
   const path = [
@@ -185,6 +193,7 @@ async function swap() {
     showToast("Swap failed!", "error");
   }
 }
+
 
 function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
