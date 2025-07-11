@@ -114,7 +114,6 @@ async function updateBalances() {
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
   document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
 }
-
 async function updateEstimate() {
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
@@ -138,8 +137,8 @@ async function updateEstimate() {
     if (tokenOut.address === "AVAX") {
       formatted = parseFloat(est).toFixed(4);
     } else {
-      const intPart = est.split('.')[0]; // take only integer part
-      formatted = intPart;
+      const floored = Math.floor(parseFloat(est));
+      formatted = floored.toString();
     }
 
     document.getElementById("tokenOutAmount").value = formatted;
@@ -148,7 +147,6 @@ async function updateEstimate() {
     document.getElementById("tokenOutAmount").value = "";
   }
 }
-
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
