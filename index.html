@@ -8,13 +8,37 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
+  <!-- Wallet Connection Modal -->
+  <div class="wallet-modal" id="walletModal">
+    <div class="wallet-modal-content">
+      <div class="wallet-modal-header">
+        <h3>Connect Wallet</h3>
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="wallet-options">
+        <button class="wallet-option" onclick="connectWallet('metamask')">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask">
+          <span>MetaMask</span>
+        </button>
+        <button class="wallet-option" onclick="connectWallet('walletconnect')">
+          <img src="https://altcoinsbox.com/wp-content/uploads/2023/03/wallet-connect-logo.png" alt="WalletConnect">
+          <span>WalletConnect</span>
+        </button>
+        <button class="wallet-option" onclick="connectWallet('coinbase')">
+          <img src="https://altcoinsbox.com/wp-content/uploads/2023/03/coinbase-wallet-logo.png" alt="Coinbase Wallet">
+          <span>Coinbase Wallet</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
       <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
-    <button class="connect-btn" onclick="connect()">Connect Wallet</button>
+    <button class="connect-btn" onclick="openModal()">Connect Wallet</button>
   </div>
 
   <!-- Swap UI -->
