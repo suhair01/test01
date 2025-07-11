@@ -20,6 +20,86 @@ body {
   min-height: 100vh;
 }
 
+/* Wallet Modal */
+.wallet-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.wallet-modal-content {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.wallet-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.wallet-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.wallet-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wallet-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  text-align: left;
+}
+
+.wallet-option:hover {
+  background: #f7f7f7;
+  transform: translateY(-2px);
+}
+
+.wallet-option img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.wallet-option span {
+  font-weight: 500;
+  font-size: 16px;
+}
+
 /* Header and Footer */
 .header-bar, .footer {
   width: 90%;
@@ -55,19 +135,34 @@ body {
   letter-spacing: 0.5px;
 }
 .connect-btn {
-  padding: 6px 14px;
+  padding: 8px 16px;
   background: var(--ruby);
   color: white;
   border: none;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .connect-btn:hover {
   background: #801722;
 }
+.connect-btn .wallet-address {
+  font-weight: 500;
+}
+.connect-btn .copy-icon {
+  cursor: pointer;
+  font-size: 14px;
+}
+.connect-btn .copy-icon:hover {
+  opacity: 0.8;
+}
 
+/* Rest of your existing CSS remains the same */
+/* ... [all your existing CSS below remains unchanged] ... */
 /* Swap Container */
 .swap-container {
   background: var(--card);
