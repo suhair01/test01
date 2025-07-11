@@ -108,7 +108,7 @@ async function updateBalances() {
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
     const dec = tokenDecimals[t.address] || 18;
-    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
+    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(0); // 👈 0 decimals for tokens
   };
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
@@ -133,7 +133,12 @@ async function updateEstimate() {
   try {
     const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
     const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
+
+    const fixedEst = tokenOut.address === "AVAX"
+      ? parseFloat(est).toFixed(4)  // AVAX → 4 decimals
+      : parseFloat(est).toFixed(0); // 👈 Tokens → 0 decimals
+
+    document.getElementById("tokenOutAmount").value = fixedEst;
   } catch (err) {
     console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
