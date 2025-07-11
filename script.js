@@ -131,19 +131,20 @@ async function updateEstimate() {
   ];
 
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
+    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
 
-    const fixedEst = tokenOut.address === "AVAX"
-      ? parseFloat(est).toFixed(4)  // AVAX → 4 decimals
-      : parseFloat(est).toFixed(0); // 👈 Tokens → 0 decimals
+    const formatted = (tokenOut.address === "AVAX")
+      ? parseFloat(est).toFixed(4)
+      : Math.floor(parseFloat(est)).toString();
 
-    document.getElementById("tokenOutAmount").value = fixedEst;
+    document.getElementById("tokenOutAmount").value = formatted;
   } catch (err) {
     console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
   }
 }
+
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
@@ -201,7 +202,25 @@ window.addEventListener("click", function (e) {
 });
 
 window.addEventListener("DOMContentLoaded", populateTokens);
-document.getElementById("tokenInAmount").addEventListener("input", updateEstimate);
+document.getElementById("tokenInAmount").addEventListener("input", () => {
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const input = document.getElementById("tokenInAmount");
+  let value = input.value;
+
+  if (tokenIn.address !== "AVAX") {
+    value = value.replace(/\D/g, ''); // allow only digits
+  } else {
+    value = value.replace(/[^0-9.]/g, ''); // digits + one dot
+    const parts = value.split('.');
+    if (parts.length > 2) value = parts[0] + '.' + parts[1]; // only 1 dot
+    if (parts[1]?.length > 4) parts[1] = parts[1].slice(0, 4); // max 4 decimals
+    value = parts.join('.');
+  }
+
+  input.value = value;
+  updateEstimate();
+});
+
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 
