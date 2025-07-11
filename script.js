@@ -1,6 +1,6 @@
-
-const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
-const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
+<script>
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
+const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
 const ABI = [
@@ -32,6 +32,7 @@ async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
   router = new ethers.Contract(routerAddress, ABI, provider);
   arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
   inSel.innerHTML = ""; outSel.innerHTML = "";
@@ -77,14 +78,14 @@ async function connect() {
   await window.ethereum.request({ method: "eth_requestAccounts" });
   provider = new ethers.BrowserProvider(window.ethereum);
   signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
-  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
+  router = new ethers.Contract(routerAddress, ABI, signer);
+  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
   userAddress = await signer.getAddress();
-  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
-  showToast("Wallet connected!", "success");
 
+  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
   document.getElementById("swapBtn").disabled = false;
   updateBalances(); updateEstimate();
+  showToast("Wallet connected!", "success");
 }
 
 function copyAddress(e) {
@@ -92,7 +93,6 @@ function copyAddress(e) {
   navigator.clipboard.writeText(userAddress);
   const icon = e.target;
   icon.innerText = "✅";
-  showToast("Address copied!", "info");
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
 
@@ -103,17 +103,19 @@ async function updateBalances() {
 
   const getBal = async (t) => {
     if (t.address === "AVAX") {
-      return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
+      const balance = await provider.getBalance(userAddress);
+      return (Math.floor(parseFloat(ethers.formatEther(balance)) * 1e4) / 1e4).toFixed(4);
+    } else {
+      const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+      const bal = await contract.balanceOf(userAddress);
+      return Math.floor(parseFloat(ethers.formatUnits(bal, tokenDecimals[t.address]))).toString();
     }
-    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-    const bal = await contract.balanceOf(userAddress);
-    const dec = tokenDecimals[t.address] || 18;
-    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(0); // 👈 0 decimals for tokens
   };
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
   document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
 }
+
 async function updateEstimate() {
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
@@ -121,9 +123,9 @@ async function updateEstimate() {
 
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const decOut = tokenDecimals[tokenOut.address] || 18;
+
   const path = [
     tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
@@ -131,25 +133,16 @@ async function updateEstimate() {
 
   try {
     const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
-    const rawOut = ethers.formatUnits(result[1], decOut);
-    let formatted;
-
-    if (tokenOut.address === "AVAX") {
-      // Keep 4 decimals, round down (not up)
-      const factor = Math.pow(10, 4);
-      formatted = (Math.floor(parseFloat(rawOut) * factor) / factor).toFixed(4);
-    } else {
-      // For tokens like LAMBO or ARENA, show integer only, rounded down
-      formatted = Math.floor(parseFloat(rawOut)).toString();
-    }
-
+    const rawOut = parseFloat(ethers.formatUnits(result[1], decOut));
+    const formatted = tokenOut.address === "AVAX"
+      ? (Math.floor(rawOut * 1e4) / 1e4).toFixed(4)
+      : Math.floor(rawOut).toString();
     document.getElementById("tokenOutAmount").value = formatted;
   } catch (err) {
     console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
   }
 }
-
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
@@ -167,17 +160,19 @@ async function swap() {
 
   try {
     if (tokenIn.address === "AVAX") {
-      const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
-      showToast("Swap submitted!", "success");
+      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
       if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
-      const tx = tokenOut.address === "AVAX"
-        ? await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline)
-        : await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
-      showToast("Swap submitted!", "success");
+
+      if (tokenOut.address === "AVAX") {
+        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      } else {
+        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      }
     }
+    showToast("Swap submitted!", "success");
   } catch (err) {
     console.error(err);
     showToast("Swap failed!", "error");
@@ -206,26 +201,25 @@ window.addEventListener("click", function (e) {
   }
 });
 
-window.addEventListener("DOMContentLoaded", populateTokens);
 document.getElementById("tokenInAmount").addEventListener("input", () => {
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const input = document.getElementById("tokenInAmount");
-  let value = input.value;
+  let value = document.getElementById("tokenInAmount").value;
 
-  if (tokenIn.address !== "AVAX") {
-    value = value.replace(/\D/g, ''); // allow only digits
+  if (tokenIn.address === "AVAX") {
+    value = value.replace(/[^0-9.]/g, '');
+    const parts = value.split(".");
+    if (parts.length > 2) value = parts[0] + "." + parts[1];
+    if (parts[1]?.length > 4) parts[1] = parts[1].slice(0, 4);
+    value = parts.join(".");
   } else {
-    value = value.replace(/[^0-9.]/g, ''); // digits + one dot
-    const parts = value.split('.');
-    if (parts.length > 2) value = parts[0] + '.' + parts[1]; // only 1 dot
-    if (parts[1]?.length > 4) parts[1] = parts[1].slice(0, 4); // max 4 decimals
-    value = parts.join('.');
+    value = value.replace(/\D/g, '');
   }
 
-  input.value = value;
+  document.getElementById("tokenInAmount").value = value;
   updateEstimate();
 });
 
+window.addEventListener("DOMContentLoaded", populateTokens);
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 
@@ -239,11 +233,7 @@ function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.innerText = msg;
-
-  const container = document.getElementById('toastContainer');
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3500);
+  document.getElementById('toastContainer').appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
 }
+</script>
