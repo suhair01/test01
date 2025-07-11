@@ -134,9 +134,13 @@ async function updateEstimate() {
     const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
 
-    const formatted = (tokenOut.address === "AVAX")
-      ? parseFloat(est).toFixed(4)
-      : Math.floor(parseFloat(est)).toString();
+    let formatted;
+    if (tokenOut.address === "AVAX") {
+      formatted = parseFloat(est).toFixed(4);
+    } else {
+      const intPart = est.split('.')[0]; // take only integer part
+      formatted = intPart;
+    }
 
     document.getElementById("tokenOutAmount").value = formatted;
   } catch (err) {
