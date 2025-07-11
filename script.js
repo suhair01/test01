@@ -19,10 +19,12 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)"
 ];
 
+// App State
 let provider, signer, router, arenaRouter, userAddress, walletConnectProvider;
 const tokenDecimals = {};
 let walletType = null;
 
+// Token List
 const tokens = [
   { symbol: "AVAX", address: "AVAX", logo: "avaxlogo.png" },
   { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "arenalogo.png" },
@@ -31,9 +33,13 @@ const tokens = [
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
 
-/* WalletConnect Initialization */
+// WalletConnect Initialization
 async function initializeWalletConnect() {
-  walletConnectProvider = new WalletConnectProvider({
+  if (typeof WalletConnectProvider === 'undefined') {
+    throw new Error('WalletConnect provider not loaded');
+  }
+
+  walletConnectProvider = new WalletConnectProvider.default({
     projectId: WALLETCONNECT_PROJECT_ID,
     chains: [43114], // Avalanche Mainnet
     showQrModal: true,
@@ -50,7 +56,7 @@ async function initializeWalletConnect() {
   return walletConnectProvider;
 }
 
-/* Wallet Connection Management */
+// Wallet Connection Management
 async function connectWallet(type) {
   try {
     closeModal();
@@ -133,12 +139,28 @@ function disconnectWallet(e) {
   showToast("Wallet disconnected", "info");
 }
 
-/* Token Functions */
+// Update UI after wallet connection
+function updateWalletUI() {
+  const shortAddress = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+  const walletIcon = walletType === 'metamask' ? 
+    '<img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width="16" height="16">' :
+    '<img src="https://altcoinsbox.com/wp-content/uploads/2023/03/wallet-connect-logo.png" width="16" height="16">';
+  
+  document.querySelector(".connect-btn").innerHTML = `
+    ${walletIcon}
+    <span class="wallet-address">${shortAddress}</span>
+    <span class="copy-icon" onclick="copyAddress(event)">📋</span>
+    <span class="disconnect-icon" onclick="disconnectWallet(event)">✕</span>
+  `;
+}
+
+// Token Management
 async function populateTokens() {
   // Initialize with fallback provider if no wallet connected
   provider = provider || new ethers.BrowserProvider(window.ethereum || "https://api.avax.network/ext/bc/C/rpc");
   router = new ethers.Contract(routerAddress, ABI, provider);
   arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+  
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
   inSel.innerHTML = ""; outSel.innerHTML = "";
@@ -181,7 +203,7 @@ function reverseTokens() {
   updateEstimate();
 }
 
-/* Balance Functions */
+// Balance Functions
 async function updateBalances() {
   if (!userAddress || !provider) return;
   
@@ -203,7 +225,7 @@ async function updateBalances() {
   document.getElementById("balanceOut").innerText = "Balance: " + await getBal(tokenOut);
 }
 
-/* Swap Estimation */
+// Swap Estimation
 async function updateEstimate() {
   if (!provider) return;
   
@@ -234,7 +256,7 @@ async function updateEstimate() {
   }
 }
 
-/* Swap Execution */
+// Swap Execution
 async function swap() {
   if (!signer) return;
   
@@ -291,7 +313,7 @@ async function swap() {
   }
 }
 
-/* Helper Functions */
+// Helper Functions
 function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
@@ -322,7 +344,7 @@ function toggleSlippage() {
   popup.style.display = popup.style.display === "block" ? "none" : "block";
 }
 
-/* Modal Functions */
+// Modal Functions
 function openModal() {
   document.getElementById('walletModal').style.display = 'flex';
 }
@@ -331,7 +353,7 @@ function closeModal() {
   document.getElementById('walletModal').style.display = 'none';
 }
 
-/* Toast Notifications */
+// Toast Notifications
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
@@ -345,7 +367,7 @@ function showToast(msg, type = 'info') {
   }, 3500);
 }
 
-/* Event Handlers */
+// Event Handlers
 function handleAccountsChanged(accounts) {
   if (accounts.length === 0) {
     disconnectWallet();
@@ -363,33 +385,14 @@ function handleChainChanged(chainId) {
   setTimeout(() => window.location.reload(), 1000);
 }
 
-// Update UI after wallet connection
-function updateWalletUI() {
-  if (!userAddress) return;
-  
-  const shortAddress = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
-  const walletIcon = walletType === 'metamask' ? 
-    '<img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width="16" height="16">' :
-    '<img src="https://altcoinsbox.com/wp-content/uploads/2023/03/wallet-connect-logo.png" width="16" height="16">';
-  
-  document.querySelector(".connect-btn").innerHTML = `
-    ${walletIcon}
-    <span class="wallet-address">${shortAddress}</span>
-    <span class="copy-icon" onclick="copyAddress(event)">📋</span>
-    <span class="disconnect-icon" onclick="disconnectWallet(event)">✕</span>
-  `;
-}
-
 // Initialize the app
 window.addEventListener("DOMContentLoaded", () => {
   populateTokens();
   
-  // Check for cached WalletConnect session
+  // Check for existing wallet connection
   if (localStorage.getItem('walletconnect')) {
     connectWallet('walletconnect').catch(console.error);
-  }
-  // Or check for existing MetaMask connection
-  else if (window.ethereum?.selectedAddress) {
+  } else if (window.ethereum?.selectedAddress) {
     connectWallet('metamask').catch(console.error);
   }
 });
