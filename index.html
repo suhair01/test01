@@ -6,7 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.4.0/dist/umd/index.min.js"></script>
+  <script src="https://unpkg.com/@walletconnect/ethereum-provider@2.4.0/dist/umd/index.min.js"></script>
+  <script src="script.js" defer></script>
 </head>
 <body>
   <!-- Wallet Connection Modal -->
@@ -25,9 +26,6 @@
           <img src="https://altcoinsbox.com/wp-content/uploads/2023/03/wallet-connect-logo.png" alt="WalletConnect">
           <span>WalletConnect</span>
         </button>
-      </div>
-      <div class="wallet-footer">
-        <p>New to Avalanche? <a href="#" target="_blank">Learn about wallets</a></p>
       </div>
     </div>
   </div>
@@ -122,7 +120,5 @@
   </footer>
 
   <div id="toastContainer"></div>
-
-  <script src="script.js"></script>
 </body>
 </html>
