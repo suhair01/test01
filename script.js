@@ -133,7 +133,11 @@ async function updateEstimate() {
   try {
     const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
     const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
+  document.getElementById("tokenOutAmount").value =
+  tokenOut.address === "AVAX"
+    ? parseFloat(est).toFixed(4)
+    : Math.floor(parseFloat(est));
+
   } catch (err) {
     console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
