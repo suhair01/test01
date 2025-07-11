@@ -161,8 +161,6 @@ body {
   opacity: 0.8;
 }
 
-/* Rest of your existing CSS remains the same */
-/* ... [all your existing CSS below remains unchanged] ... */
 /* Swap Container */
 .swap-container {
   background: var(--card);
