@@ -32,6 +32,7 @@ body {
   z-index: 1000;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(5px);
 }
 
 .wallet-modal-content {
@@ -41,6 +42,12 @@ body {
   max-width: 400px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .wallet-modal-header {
@@ -100,6 +107,24 @@ body {
   font-size: 16px;
 }
 
+.wallet-footer {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+.wallet-footer a {
+  color: var(--ruby);
+  text-decoration: none;
+}
+
+.wallet-footer a:hover {
+  text-decoration: underline;
+}
+
 /* Header and Footer */
 .header-bar, .footer {
   width: 90%;
@@ -150,15 +175,31 @@ body {
 .connect-btn:hover {
   background: #801722;
 }
+.connect-btn img {
+  width: 16px;
+  height: 16px;
+}
 .connect-btn .wallet-address {
   font-weight: 500;
 }
 .connect-btn .copy-icon {
   cursor: pointer;
   font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
 }
 .connect-btn .copy-icon:hover {
-  opacity: 0.8;
+  opacity: 1;
+}
+.connect-btn .disconnect-icon {
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.connect-btn .disconnect-icon:hover {
+  opacity: 1;
+  color: #fff;
 }
 
 /* Swap Container */
@@ -423,4 +464,9 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+}
+
+/* WalletConnect Modal Overrides */
+wcm-modal {
+  --wcm-z-index: 9999 !important;
 }
