@@ -1,37 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Avaly</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>RubySwap</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
-  <script src="script.js" defer></script>
 </head>
 <body>
-  <!-- Wallet Connection Modal -->
-  <div class="wallet-modal" id="walletModal">
-    <div class="wallet-modal-content">
-      <div class="wallet-modal-header">
-        <h3>Connect Wallet</h3>
-        <button class="close-modal" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="wallet-options">
-        <button class="wallet-option" onclick="connectWallet()">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask">
-          <span>MetaMask</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
-      <img src="logo.jpg" alt="Avalyfi Logo" class="logo">
-      <span class="brand-name">Avaly</span>
+      <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
+      <span class="brand-name">RubySwap</span>
     </div>
-    <button class="connect-btn" onclick="openModal()">Connect Wallet</button>
+    <button class="connect-btn" onclick="connect()">Connect Wallet</button>
   </div>
 
   <!-- Swap UI -->
@@ -47,7 +30,7 @@
         <div class="slippage-popup" id="slippagePopup">
           <label>Slippage:</label>
           <div class="slippage-input-wrapper">
-            <input id="slippage" value="1">
+            <input id="slippage" value="1" />
             <span class="percent-label">%</span>
           </div>
         </div>
@@ -57,12 +40,12 @@
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-          <img id="inLogo" src="" onerror="this.src='default-token.png'">
-          <select id="tokenInSelect"></select>
+          <img id="inLogo" src="" onerror="this.src='gold.png'" />
+          <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
         </div>
         <div class="balance" id="balanceIn">Balance: 0</div>
       </div>
-      <input class="amount-input" id="tokenInAmount" placeholder="0.0">
+      <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
       <div class="percentage-buttons">
         <button onclick="setPercentage(25)">25%</button>
         <button onclick="setPercentage(50)">50%</button>
@@ -75,8 +58,8 @@
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-          <img id="outLogo" src="" onerror="this.src='default-token.png'">
-          <select id="tokenOutSelect"></select>
+          <img id="outLogo" src="" onerror="this.src='gold.png'" />
+          <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
         </div>
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
@@ -91,9 +74,9 @@
     <div class="footer-content">
       <div class="footer-top">
         <div class="socials">
-          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png" alt="Discord"></a>
-          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter"></a>
-          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111370.png" alt="Discord" /></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" /></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub" /></a>
         </div>
         <div class="footer-links">
           <a href="#">Documents</a>
@@ -103,17 +86,19 @@
       </div>
       <div class="footer-bottom">
         <div class="footer-brand">
-          <img src="logo.jpg" class="footer-logo">
+          <img src="logo.jpg" class="footer-logo" />
           <div>
-            <strong>Avaly</strong><br>
+            <strong>RubySwap</strong><br />
             <small>Seamless DEX on Avalanche</small>
           </div>
         </div>
-        <div class="legal">© Avaly 2025 · Legal Disclaimer</div>
+        <div class="legal">© RubySwap 2025 · Legal Disclaimer</div>
       </div>
     </div>
   </footer>
 
   <div id="toastContainer"></div>
+
+  <script src="script.js"></script>
 </body>
 </html>
