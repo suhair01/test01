@@ -200,30 +200,32 @@ document.getElementById("tokenInAmount").addEventListener("input", function (e) 
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   let val = e.target.value;
 
-  // Allow only numbers and decimals
+  // Strip unwanted characters
   val = val.replace(/[^0-9.]/g, "");
 
   // Prevent multiple dots
   const parts = val.split(".");
   if (parts.length > 2) val = parts[0] + "." + parts[1];
 
-  // Limit to 4 decimal places
-  if (parts[1] && parts[1].length > 4) {
-    parts[1] = parts[1].substring(0, 4);
-    val = parts.join(".");
-  }
-
-  // If not AVAX, round down to whole number
-  if (tokenIn.address !== "AVAX" && val.includes(".")) {
-    const rounded = Math.floor(parseFloat(val));
-    e.target.value = rounded;
-    showToast(`Decimals removed: rounded down to ${rounded}`, "info");
-  } else {
+  // If token is AVAX → allow up to 4 decimals
+  if (tokenIn.address === "AVAX") {
+    if (parts[1] && parts[1].length > 4) {
+      parts[1] = parts[1].substring(0, 4);
+      val = parts.join(".");
+    }
     e.target.value = val;
+  } else {
+    // For non-AVAX: force integer input only
+    const intVal = parts[0];
+    e.target.value = intVal;
+    if (val.includes(".")) {
+      showToast(`Decimals removed: rounded down to ${intVal}`, "info");
+    }
   }
 
   updateEstimate();
 });
+
 
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
