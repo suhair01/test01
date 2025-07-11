@@ -204,32 +204,29 @@ document.getElementById("tokenInAmount").addEventListener("input", function (e) 
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   let val = e.target.value;
 
-  // Strip unwanted characters
+  // Allow only numbers and a single dot
   val = val.replace(/[^0-9.]/g, "");
-
-  // Prevent multiple dots
   const parts = val.split(".");
   if (parts.length > 2) val = parts[0] + "." + parts[1];
 
-  // If token is AVAX → allow up to 4 decimals
   if (tokenIn.address === "AVAX") {
+    // Allow up to 4 decimals
     if (parts[1] && parts[1].length > 4) {
       parts[1] = parts[1].substring(0, 4);
       val = parts.join(".");
     }
     e.target.value = val;
   } else {
-    // For non-AVAX: force integer input only
+    // For non-AVAX tokens: only allow integers
     const intVal = parts[0];
-    e.target.value = intVal;
-    if (val.includes(".")) {
+    if (val.includes(".") && parts[1] !== "0") {
       showToast(`Decimals removed: rounded down to ${intVal}`, "info");
     }
+    e.target.value = intVal;
   }
 
   updateEstimate();
 });
-
 
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
