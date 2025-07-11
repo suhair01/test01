@@ -35,7 +35,7 @@
   <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
-      <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
+      <img src="logo.jpg" alt="Avalyfi Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
     <button class="connect-btn" onclick="openModal()">Connect Wallet</button>
@@ -64,12 +64,12 @@
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-          <img id="inLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+          <img id="inLogo" src="" onerror="this.src='default-token.png'" />
+          <select id="tokenInSelect"></select>
         </div>
         <div class="balance" id="balanceIn">Balance: 0</div>
       </div>
-      <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
+      <input class="amount-input" id="tokenInAmount" placeholder="0.0">
       <div class="percentage-buttons">
         <button onclick="setPercentage(25)">25%</button>
         <button onclick="setPercentage(50)">50%</button>
@@ -82,8 +82,8 @@
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-          <img id="outLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+          <img id="outLogo" src="" onerror="this.src='default-token.png'" />
+          <select id="tokenOutSelect"></select>
         </div>
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
