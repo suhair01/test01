@@ -1,6 +1,6 @@
-<script>
-const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
-const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
+
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
+const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
 const ABI = [
@@ -32,7 +32,6 @@ async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
   router = new ethers.Contract(routerAddress, ABI, provider);
   arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
-
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
   inSel.innerHTML = ""; outSel.innerHTML = "";
@@ -78,14 +77,14 @@ async function connect() {
   await window.ethereum.request({ method: "eth_requestAccounts" });
   provider = new ethers.BrowserProvider(window.ethereum);
   signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer);
-  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
+  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
   userAddress = await signer.getAddress();
-
   document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
+  showToast("Wallet connected!", "success");
+
   document.getElementById("swapBtn").disabled = false;
   updateBalances(); updateEstimate();
-  showToast("Wallet connected!", "success");
 }
 
 function copyAddress(e) {
@@ -93,6 +92,7 @@ function copyAddress(e) {
   navigator.clipboard.writeText(userAddress);
   const icon = e.target;
   icon.innerText = "✅";
+  showToast("Address copied!", "info");
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
 
@@ -103,13 +103,12 @@ async function updateBalances() {
 
   const getBal = async (t) => {
     if (t.address === "AVAX") {
-      const balance = await provider.getBalance(userAddress);
-      return (Math.floor(parseFloat(ethers.formatEther(balance)) * 1e4) / 1e4).toFixed(4);
-    } else {
-      const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
-      const bal = await contract.balanceOf(userAddress);
-      return Math.floor(parseFloat(ethers.formatUnits(bal, tokenDecimals[t.address]))).toString();
+      return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
     }
+    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+    const bal = await contract.balanceOf(userAddress);
+    const dec = tokenDecimals[t.address] || 18;
+    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
   };
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
@@ -123,21 +122,18 @@ async function updateEstimate() {
 
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const decOut = tokenDecimals[tokenOut.address] || 18;
-
   const path = [
     tokenIn.address === "AVAX" ? WAVAX : tokenIn.address,
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
   ];
 
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
-    const rawOut = parseFloat(ethers.formatUnits(result[1], decOut));
-    const formatted = tokenOut.address === "AVAX"
-      ? (Math.floor(rawOut * 1e4) / 1e4).toFixed(4)
-      : Math.floor(rawOut).toString();
-    document.getElementById("tokenOutAmount").value = formatted;
+    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
+    const est = ethers.formatUnits(result[1], decOut);
+    document.getElementById("tokenOutAmount").value = parseFloat(est).toFixed(4);
   } catch (err) {
     console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
@@ -160,19 +156,17 @@ async function swap() {
 
   try {
     if (tokenIn.address === "AVAX") {
-      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
+      const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
+      showToast("Swap submitted!", "success");
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
       if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
-
-      if (tokenOut.address === "AVAX") {
-        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
-      } else {
-        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
-      }
+      const tx = tokenOut.address === "AVAX"
+        ? await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline)
+        : await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      showToast("Swap submitted!", "success");
     }
-    showToast("Swap submitted!", "success");
   } catch (err) {
     console.error(err);
     showToast("Swap failed!", "error");
@@ -201,25 +195,24 @@ window.addEventListener("click", function (e) {
   }
 });
 
+window.addEventListener("DOMContentLoaded", populateTokens);
 document.getElementById("tokenInAmount").addEventListener("input", () => {
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  let value = document.getElementById("tokenInAmount").value;
+  const inputEl = document.getElementById("tokenInAmount");
+  let value = inputEl.value;
 
-  if (tokenIn.address === "AVAX") {
-    value = value.replace(/[^0-9.]/g, '');
-    const parts = value.split(".");
-    if (parts.length > 2) value = parts[0] + "." + parts[1];
-    if (parts[1]?.length > 4) parts[1] = parts[1].slice(0, 4);
-    value = parts.join(".");
-  } else {
-    value = value.replace(/\D/g, '');
+  if (tokenIn.address !== "AVAX") {
+    const parsed = parseFloat(value);
+    if (!isNaN(parsed) && parsed % 1 !== 0) {
+      const rounded = Math.floor(parsed);
+      inputEl.value = rounded;
+      showToast(`Decimals removed: rounded down to ${rounded}`, "info");
+    }
   }
 
-  document.getElementById("tokenInAmount").value = value;
   updateEstimate();
 });
 
-window.addEventListener("DOMContentLoaded", populateTokens);
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 
@@ -233,7 +226,11 @@ function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.innerText = msg;
-  document.getElementById('toastContainer').appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
+
+  const container = document.getElementById('toastContainer');
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3500);
 }
-</script>
