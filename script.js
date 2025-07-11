@@ -131,14 +131,16 @@ async function updateEstimate() {
 
   try {
     const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
-    const est = ethers.formatUnits(result[1], decOut);
-
+    const rawOut = ethers.formatUnits(result[1], decOut);
     let formatted;
+
     if (tokenOut.address === "AVAX") {
-      formatted = parseFloat(est).toFixed(4);
+      // Keep 4 decimals, round down (not up)
+      const factor = Math.pow(10, 4);
+      formatted = (Math.floor(parseFloat(rawOut) * factor) / factor).toFixed(4);
     } else {
-      const floored = Math.floor(parseFloat(est));
-      formatted = floored.toString();
+      // For tokens like LAMBO or ARENA, show integer only, rounded down
+      formatted = Math.floor(parseFloat(rawOut)).toString();
     }
 
     document.getElementById("tokenOutAmount").value = formatted;
@@ -147,6 +149,7 @@ async function updateEstimate() {
     document.getElementById("tokenOutAmount").value = "";
   }
 }
+
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
