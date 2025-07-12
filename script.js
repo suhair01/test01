@@ -292,6 +292,8 @@ window.reverseTokens = reverseTokens;
 window.swap = swap;
 window.setPercentage = setPercentage;
 window.toggleSlippage = toggleSlippage;
+window.switchToAvalanche = switchToAvalanche;
+
 
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
