@@ -293,3 +293,10 @@ function disconnect() {
 window.viewTransactions = viewTransactions;
 window.showHoldings = showHoldings;
 window.disconnect = disconnect;
+
+function toggleProfileDropdown(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById("profileDropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+window.toggleProfileDropdown = toggleProfileDropdown;
