@@ -1,11 +1,15 @@
-const routerAddress = "0xB114312a34b55183034cBf8F56A6E89c3a03E544";
+
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
+const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+
 const ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
   "function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)",
   "function swapExactAVAXForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) payable",
   "function swapExactTokensForAVAXSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)"
 ];
+
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
   "function approve(address spender, uint256 amount) returns (bool)",
@@ -13,13 +17,13 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)"
 ];
 
-let provider, signer, router, userAddress;
+let provider, signer, router, arenaRouter, userAddress;
 const tokenDecimals = {};
 
 const tokens = [
-  { symbol: "AVAX", address: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-  { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "https://via.placeholder.com/20x20.png?text=A" },
-  { symbol: "USDC", address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
+  { symbol: "AVAX", address: "AVAX", logo: "avaxlogo.png" },
+  { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "arenalogo.png" },
+  { symbol: "LAMBO", address: "0x6F43fF77A9C0Cf552b5b653268fBFe26A052429b", logo: "https://assets.coingecko.com/coins/images/6319/thumb/USD_Coin_icon.png" },
   { symbol: "WETH", address: "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
@@ -27,6 +31,7 @@ const tokens = [
 async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
   router = new ethers.Contract(routerAddress, ABI, provider);
+  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
   inSel.innerHTML = ""; outSel.innerHTML = "";
@@ -72,7 +77,8 @@ async function connect() {
   await window.ethereum.request({ method: "eth_requestAccounts" });
   provider = new ethers.BrowserProvider(window.ethereum);
   signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer);
+  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
+  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
   userAddress = await signer.getAddress();
   document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
   showToast("Wallet connected!", "success");
@@ -96,11 +102,13 @@ async function updateBalances() {
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
 
   const getBal = async (t) => {
-    if (t.address === "AVAX") return ethers.formatEther(await provider.getBalance(userAddress));
+    if (t.address === "AVAX") {
+      return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
+    }
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
     const dec = tokenDecimals[t.address] || 18;
-    return ethers.formatUnits(bal, dec);
+    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
   };
 
   document.getElementById("balanceIn").innerText = "Balance: " + await getBal(tokenIn);
@@ -123,10 +131,15 @@ async function updateEstimate() {
   ];
 
   try {
-    const result = await router.getAmountsOut(ethers.parseUnits(amt, decIn), path);
+    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
     const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value = est;
-  } catch {
+  document.getElementById("tokenOutAmount").value =
+  tokenOut.address === "AVAX"
+    ? parseFloat(est).toFixed(4)
+    : Math.floor(parseFloat(est));
+
+  } catch (err) {
+    console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
   }
 }
@@ -165,12 +178,20 @@ async function swap() {
 }
 
 function setPercentage(pct) {
-  const balText = document.getElementById("balanceIn").innerText.split(":"[1]);
+  const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
-  const val = (bal * pct / 100).toFixed(6);
-  document.getElementById("tokenInAmount").value = val;
+  if (isNaN(bal)) return;
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const val = (bal * pct / 100);
+
+  document.getElementById("tokenInAmount").value =
+    tokenIn.address === "AVAX"
+      ? parseFloat(val).toFixed(4)
+      : Math.floor(parseFloat(val));
+
   updateEstimate();
 }
+
 
 function toggleSlippage() {
   const popup = document.getElementById("slippagePopup");
@@ -186,6 +207,42 @@ window.addEventListener("click", function (e) {
 });
 
 window.addEventListener("DOMContentLoaded", populateTokens);
+document.getElementById("tokenInAmount").addEventListener("input", function (e) {
+  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  let val = e.target.value;
+
+  // Allow only numbers and a single dot
+  val = val.replace(/[^0-9.]/g, "");
+  const parts = val.split(".");
+  if (parts.length > 2) val = parts[0] + "." + parts[1];
+
+  if (tokenIn.address === "AVAX") {
+    // Allow up to 4 decimals
+    if (parts[1] && parts[1].length > 4) {
+      parts[1] = parts[1].substring(0, 4);
+      val = parts.join(".");
+    }
+    e.target.value = val;
+  } else {
+    // For non-AVAX tokens: only allow integers
+    const intVal = parts[0];
+    if (val.includes(".") && parts[1] !== "0") {
+      showToast(`Decimals removed: rounded down to ${intVal}`, "info");
+    }
+    e.target.value = intVal;
+  }
+
+  updateEstimate();
+});
+
+document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
+document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
+
+window.connect = connect;
+window.reverseTokens = reverseTokens;
+window.swap = swap;
+window.setPercentage = setPercentage;
+window.toggleSlippage = toggleSlippage;
 
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
@@ -199,4 +256,3 @@ function showToast(msg, type = 'info') {
     toast.remove();
   }, 3500);
 }
-
