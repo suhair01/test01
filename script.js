@@ -266,3 +266,36 @@ function showToast(msg, type = 'info') {
   document.getElementById('toastContainer').appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
 }
+function viewTransactions() {
+  if (!userAddress) return showToast("Connect wallet first", "error");
+  window.open(`https://snowtrace.io/address/${userAddress}`, "_blank");
+}
+
+async function showHoldings() {
+  if (!userAddress) return showToast("Connect wallet first", "error");
+  let msg = "Token Balances:\n";
+  for (const t of tokens) {
+    let balance = 0;
+    if (t.address === "AVAX") {
+      balance = await provider.getBalance(userAddress);
+      msg += `• ${t.symbol}: ${parseFloat(ethers.formatEther(balance)).toFixed(4)}\n`;
+    } else {
+      const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+      const raw = await contract.balanceOf(userAddress);
+      const dec = tokenDecimals[t.address] || 18;
+      msg += `• ${t.symbol}: ${parseFloat(ethers.formatUnits(raw, dec)).toFixed(4)}\n`;
+    }
+  }
+  alert(msg);
+}
+
+function disconnect() {
+  userAddress = null;
+  document.querySelector(".connect-btn").innerText = "Connect Wallet";
+  document.getElementById("profileAddress").innerText = "Not Connected";
+  document.getElementById("tokenOutAmount").value = "";
+  document.getElementById("balanceIn").innerText = "Balance: 0";
+  document.getElementById("balanceOut").innerText = "Balance: 0";
+  document.getElementById("swapBtn").disabled = true;
+  showToast("Disconnected!", "info");
+}
