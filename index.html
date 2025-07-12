@@ -14,10 +14,18 @@
       <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
-    <button class="connect-btn" onclick="connect()">Connect Wallet</button>
-<button id="switchNetworkBtn" style="display:none; margin-top:10px; background:#ff5555; color:white; border:none; padding:10px 16px; border-radius:8px; font-weight:bold;" onclick="switchToAvalanche()">
-  Switch to Avalanche
-</button>
+  <div class="header-actions">
+  <button class="connect-btn" onclick="connect()">Connect Wallet</button>
+  <div class="profile-wrapper" onclick="toggleProfileDropdown(event)">
+    🧑
+    <div class="profile-dropdown" id="profileDropdown">
+      <div class="profile-address" id="profileAddress">Not Connected</div>
+      <div class="profile-item" onclick="showToast('My Tokens (Coming Soon)')">My Tokens</div>
+      <div class="profile-item" onclick="showToast('Transaction History (Coming Soon)')">Transaction History</div>
+      <div class="profile-item" onclick="disconnect()">Disconnect</div>
+    </div>
+  </div>
+</div>
 
   </div>
 
