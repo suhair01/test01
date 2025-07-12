@@ -266,3 +266,25 @@ function showToast(msg, type = 'info') {
   document.getElementById('toastContainer').appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
 }
+function viewTransactions() {
+  showToast("Coming soon: View Transactions", "info");
+}
+
+function showHoldings() {
+  showToast("Coming soon: Token Holdings", "info");
+}
+
+function disconnect() {
+  userAddress = null;
+  document.getElementById("profileAddress").innerText = "Not Connected";
+  document.querySelector(".connect-btn").innerText = "Connect Wallet";
+  document.getElementById("swapBtn").disabled = true;
+  document.getElementById("balanceIn").innerText = "Balance: 0";
+  document.getElementById("balanceOut").innerText = "Balance: 0";
+  document.getElementById("tokenInAmount").value = "";
+  document.getElementById("tokenOutAmount").value = "";
+  showToast("Disconnected!", "info");
+}
+window.viewTransactions = viewTransactions;
+window.showHoldings = showHoldings;
+window.disconnect = disconnect;
