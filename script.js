@@ -81,35 +81,64 @@ function reverseTokens() {
 }
 
 async function connect() {
-  if (!window.ethereum) return alert("Install MetaMask");
+  if (!window.ethereum) return alert("Please install MetaMask");
 
   try {
+    // Request wallet connection
     await window.ethereum.request({ method: "eth_requestAccounts" });
 
+    // Check chain ID
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+
     if (chainId !== AVALANCHE_PARAMS.chainId) {
-      showToast("Wrong Network! Switch to Avalanche", "error");
-      document.getElementById("switchNetworkBtn").style.display = "block";
-      return;
+      // Not on Avalanche → try to switch
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: AVALANCHE_PARAMS.chainId }],
+        });
+      } catch (err) {
+        // If Avalanche not added yet
+        if (err.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [AVALANCHE_PARAMS],
+            });
+          } catch (addErr) {
+            console.error("Add Avalanche failed:", addErr);
+            showToast("Failed to add Avalanche", "error");
+            return;
+          }
+        } else {
+          console.error("Switch chain failed:", err);
+          showToast("Please switch to Avalanche", "error");
+          return;
+        }
+      }
     }
 
+    // Continue connecting wallet
     provider = new ethers.BrowserProvider(window.ethereum);
     signer = await provider.getSigner();
     router = new ethers.Contract(routerAddress, ABI, signer);
     arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
     userAddress = await signer.getAddress();
 
+    // Show address in UI
     document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
     document.getElementById("swapBtn").disabled = false;
-    document.getElementById("switchNetworkBtn").style.display = "none";
-
     showToast("Wallet connected!", "success");
-    updateBalances(); updateEstimate();
+
+    // Update balances and estimates
+    updateBalances();
+    updateEstimate();
   } catch (err) {
-    console.error(err);
+    console.error("Connection failed:", err);
     showToast("Wallet connection failed!", "error");
   }
 }
+
 async function switchToAvalanche() {
   try {
     await window.ethereum.request({
