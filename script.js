@@ -123,6 +123,11 @@ function copyAddress(e) {
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
 
+function toggleProfile() {
+  const dropdown = document.getElementById("profileDropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+
 async function updateBalances() {
   if (!userAddress) return;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
