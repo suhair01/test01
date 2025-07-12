@@ -1,6 +1,7 @@
+// RubySwap Final Script: Integrated AVAX/WAVAX, Slippage, Profile, and Swap
 
-const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
-const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
+const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
 const AVALANCHE_PARAMS = {
@@ -84,87 +85,35 @@ async function connect() {
   if (!window.ethereum) return alert("Please install MetaMask");
 
   try {
-    // Request wallet connection
     await window.ethereum.request({ method: "eth_requestAccounts" });
-
-    // Check chain ID
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-
     if (chainId !== AVALANCHE_PARAMS.chainId) {
-      // Not on Avalanche → try to switch
       try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: AVALANCHE_PARAMS.chainId }],
-        });
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: AVALANCHE_PARAMS.chainId }] });
       } catch (err) {
-        // If Avalanche not added yet
         if (err.code === 4902) {
-          try {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [AVALANCHE_PARAMS],
-            });
-          } catch (addErr) {
-            console.error("Add Avalanche failed:", addErr);
-            showToast("Failed to add Avalanche", "error");
-            return;
-          }
+          await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [AVALANCHE_PARAMS] });
         } else {
-          console.error("Switch chain failed:", err);
-          showToast("Please switch to Avalanche", "error");
-          return;
+          return showToast("Please switch to Avalanche", "error");
         }
       }
     }
-   
 
-    // Continue connecting wallet
     provider = new ethers.BrowserProvider(window.ethereum);
     signer = await provider.getSigner();
     router = new ethers.Contract(routerAddress, ABI, signer);
     arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
     userAddress = await signer.getAddress();
+
     document.getElementById("profileAddress").innerText = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
-
-
-    // Show address in UI
     document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
     document.getElementById("swapBtn").disabled = false;
     showToast("Wallet connected!", "success");
-
-    // Update balances and estimates
     updateBalances();
     updateEstimate();
   } catch (err) {
-    console.error("Connection failed:", err);
+    console.error(err);
     showToast("Wallet connection failed!", "error");
-  }
-}
-
-async function switchToAvalanche() {
-  try {
-    await window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: AVALANCHE_PARAMS.chainId }]
-    });
-    location.reload();
-  } catch (err) {
-    if (err.code === 4902) {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [AVALANCHE_PARAMS]
-        });
-        location.reload();
-      } catch (addError) {
-        showToast("Failed to add Avalanche", "error");
-        console.error(addError);
-      }
-    } else {
-      showToast("Switch network failed!", "error");
-      console.error(err);
-    }
   }
 }
 
@@ -176,45 +125,6 @@ function copyAddress(e) {
   showToast("Address copied!", "info");
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
-async function getUserProfile(address) {
-  try {
-    const res = await fetch(`https://your-api.com/profile/${address}`);
-    const data = await res.json();
-    if (!data) return;
-
-    document.getElementById("profileName").innerText = data.name || "Unnamed";
-    document.getElementById("profilePoints").innerText = data.points || "0";
-    document.getElementById("profilePic").src = data.avatar || "default-avatar.png";
-  } catch (e) {
-    console.error("Profile load failed", e);
-  }
-}
- function disconnect() {
-  provider = null;
-  signer = null;
-  userAddress = null;
-  document.getElementById("profileAddress").innerText = "Not Connected";
-  document.querySelector(".connect-btn").innerHTML = "Connect Wallet";
-  document.getElementById("swapBtn").disabled = true;
-  showToast("Wallet disconnected", "info");
-}
-
-function toggleProfileDropdown(event) {
-  event.stopPropagation();
-  const dropdown = document.getElementById("profileDropdown");
-  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-}
-
-window.addEventListener("click", function (event) {
-  const dropdown = document.getElementById("profileDropdown");
-  const wrapper = document.querySelector(".profile-wrapper");
-
-  // Only hide dropdown if clicked outside the wrapper
-  if (!wrapper.contains(event.target)) {
-    dropdown.style.display = "none";
-  }
-});
-
 
 async function updateBalances() {
   if (!userAddress) return;
@@ -242,7 +152,6 @@ async function updateEstimate() {
 
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const decOut = tokenDecimals[tokenOut.address] || 18;
   const path = [
@@ -251,22 +160,19 @@ async function updateEstimate() {
   ];
 
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path); // estimation only
+    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
-  document.getElementById("tokenOutAmount").value =
-  tokenOut.address === "AVAX"
-    ? parseFloat(est).toFixed(4)
-    : Math.floor(parseFloat(est));
-
+    document.getElementById("tokenOutAmount").value =
+      tokenOut.address === "AVAX"
+        ? parseFloat(est).toFixed(4)
+        : Math.floor(parseFloat(est));
   } catch (err) {
-    console.error("Estimation failed:", err);
     document.getElementById("tokenOutAmount").value = "";
   }
 }
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
-  const slippage = parseFloat(document.getElementById("slippage").value);
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
@@ -280,38 +186,33 @@ async function swap() {
 
   try {
     if (tokenIn.address === "AVAX") {
-      const tx = await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
-      showToast("Swap submitted!", "success");
+      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
       if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
-      const tx = tokenOut.address === "AVAX"
-        ? await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline)
-        : await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
-      showToast("Swap submitted!", "success");
+      if (tokenOut.address === "AVAX") {
+        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      } else {
+        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+      }
     }
+    showToast("Swap submitted!", "success");
   } catch (err) {
-    console.error(err);
     showToast("Swap failed!", "error");
   }
 }
 
 function setPercentage(pct) {
-  const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
+  const balText = document.getElementById("balanceIn").innerText.split(":"[1])?.trim();
   const bal = parseFloat(balText);
   if (isNaN(bal)) return;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const val = (bal * pct / 100);
-
   document.getElementById("tokenInAmount").value =
-    tokenIn.address === "AVAX"
-      ? parseFloat(val).toFixed(4)
-      : Math.floor(parseFloat(val));
-
+    tokenIn.address === "AVAX" ? parseFloat(val).toFixed(4) : Math.floor(parseFloat(val));
   updateEstimate();
 }
-
 
 function toggleSlippage() {
   const popup = document.getElementById("slippagePopup");
@@ -319,39 +220,32 @@ function toggleSlippage() {
 }
 
 window.addEventListener("click", function (e) {
-  const popup = document.getElementById("slippagePopup");
-  const btn = document.querySelector(".settings-btn");
-  if (!popup.contains(e.target) && !btn.contains(e.target)) {
-    popup.style.display = "none";
+  const profileDropdown = document.getElementById("profileDropdown");
+  const profileWrapper = document.querySelector(".profile-wrapper");
+  const slippagePopup = document.getElementById("slippagePopup");
+  const slippageBtn = document.querySelector(".settings-btn");
+
+  if (profileDropdown && profileWrapper && !profileWrapper.contains(e.target)) {
+    profileDropdown.style.display = "none";
+  }
+  if (slippagePopup && slippageBtn && !slippagePopup.contains(e.target) && !slippageBtn.contains(e.target)) {
+    slippagePopup.style.display = "none";
   }
 });
 
 window.addEventListener("DOMContentLoaded", populateTokens);
 document.getElementById("tokenInAmount").addEventListener("input", function (e) {
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  let val = e.target.value;
-
-  // Allow only numbers and a single dot
-  val = val.replace(/[^0-9.]/g, "");
+  let val = e.target.value.replace(/[^0-9.]/g, "");
   const parts = val.split(".");
   if (parts.length > 2) val = parts[0] + "." + parts[1];
-
   if (tokenIn.address === "AVAX") {
-    // Allow up to 4 decimals
-    if (parts[1] && parts[1].length > 4) {
-      parts[1] = parts[1].substring(0, 4);
-      val = parts.join(".");
-    }
+    if (parts[1] && parts[1].length > 4) val = parts[0] + "." + parts[1].substring(0, 4);
     e.target.value = val;
   } else {
-    // For non-AVAX tokens: only allow integers
-    const intVal = parts[0];
-    if (val.includes(".") && parts[1] !== "0") {
-      showToast(`Decimals removed: rounded down to ${intVal}`, "info");
-    }
-    e.target.value = intVal;
+    if (val.includes(".")) showToast(`Decimals removed: rounded down to ${parts[0]}`, "info");
+    e.target.value = parts[0];
   }
-
   updateEstimate();
 });
 
@@ -363,21 +257,12 @@ window.reverseTokens = reverseTokens;
 window.swap = swap;
 window.setPercentage = setPercentage;
 window.toggleSlippage = toggleSlippage;
-window.switchToAvalanche = switchToAvalanche;
-window.toggleProfileDropdown = toggleProfileDropdown;
-window.disconnect = disconnect;
-
-
+window.copyAddress = copyAddress;
 
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.innerText = msg;
-
-  const container = document.getElementById('toastContainer');
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 3500);
+  document.getElementById('toastContainer').appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
 }
