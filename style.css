@@ -54,20 +54,53 @@ body {
   color: var(--ruby);
   letter-spacing: 0.5px;
 }
+/* Add these styles to your existing CSS */
+
+/* Connection button styles */
 .connect-btn {
-  padding: 6px 14px;
-  background: var(--ruby);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.connect-btn:hover {
-  background: #801722;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
+.connect-btn.connected {
+  background: #28a745;
+}
+
+.connect-btn.connected:hover {
+  background: #218838;
+}
+
+.connected-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #4cff6c;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: pulse 2s infinite;
+}
+
+.copy-icon {
+  margin-left: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.copy-icon:hover {
+  transform: scale(1.1);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Network warning toast */
+.toast.warning {
+  background: #ffc107;
+  color: #000;
+}
 /* Swap Container */
 .swap-container {
   background: var(--card);
