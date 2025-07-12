@@ -2,6 +2,8 @@
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
+const AVALANCHE_CHAIN_ID = "0xA86A"; // Avalanche Mainnet C-Chain
+const AVALANCHE_RPC_URL = "https://api.avax.network/ext/bc/C/rpc";
 
 const ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
@@ -72,21 +74,173 @@ function reverseTokens() {
   updateLogos(); updateBalances(); updateEstimate();
 }
 
+// Update the connect function
 async function connect() {
-  if (!window.ethereum) return alert("Install MetaMask");
-  await window.ethereum.request({ method: "eth_requestAccounts" });
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
-  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
-  userAddress = await signer.getAddress();
-  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
-  showToast("Wallet connected!", "success");
+  try {
+    if (!window.ethereum) {
+      showToast("Please install MetaMask to connect", "error");
+      window.open("https://metamask.io/download.html", "_blank");
+      return;
+    }
 
-  document.getElementById("swapBtn").disabled = false;
-  updateBalances(); updateEstimate();
+    // Check if already connected
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    if (accounts.length > 0 && userAddress) {
+      showToast("Already connected", "info");
+      return;
+    }
+
+    // Request connection
+    showToast("Connecting to MetaMask...", "info");
+    
+    // Request accounts
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    userAddress = accounts[0];
+    
+    // Check and switch to Avalanche network if needed
+    await checkNetwork();
+    
+    // Initialize providers and contracts
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    router = new ethers.Contract(routerAddress, ABI, signer);
+    arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+    
+    // Update UI
+    updateConnectionUI();
+    showToast("Wallet connected!", "success");
+    
+    // Enable swap button
+    document.getElementById("swapBtn").disabled = false;
+    
+    // Update balances and estimates
+    updateBalances();
+    updateEstimate();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+  } catch (error) {
+    console.error("Connection error:", error);
+    handleConnectionError(error);
+  }
 }
 
+// New helper functions
+async function checkNetwork() {
+  const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+  
+  if (chainId !== AVALANCHE_CHAIN_ID) {
+    try {
+      showToast("Switching to Avalanche Network...", "info");
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: AVALANCHE_CHAIN_ID }],
+      });
+    } catch (switchError) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: AVALANCHE_CHAIN_ID,
+                chainName: 'Avalanche Mainnet C-Chain',
+                nativeCurrency: {
+                  name: 'AVAX',
+                  symbol: 'AVAX',
+                  decimals: 18
+                },
+                rpcUrls: [AVALANCHE_RPC_URL],
+                blockExplorerUrls: ['https://snowtrace.io/']
+              }
+            ]
+          });
+        } catch (addError) {
+          showToast("Failed to add Avalanche network", "error");
+          throw addError;
+        }
+      } else {
+        showToast("Failed to switch to Avalanche network", "error");
+        throw switchError;
+      }
+    }
+  }
+}
+
+function updateConnectionUI() {
+  const btn = document.querySelector(".connect-btn");
+  if (userAddress) {
+    btn.innerHTML = `
+      <span class="connected-dot"></span>
+      ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}
+      <span onclick="copyAddress(event)" class="copy-icon">📋</span>
+    `;
+    btn.classList.add("connected");
+  } else {
+    btn.textContent = "Connect Wallet";
+    btn.classList.remove("connected");
+  }
+}
+
+function handleConnectionError(error) {
+  let message = "Connection failed";
+  
+  if (error.code === 4001) {
+    message = "Connection rejected by user";
+  } else if (error.code === -32002) {
+    message = "Already processing a request. Please check MetaMask";
+  } else {
+    message = error.message || message;
+  }
+  
+  showToast(message, "error");
+}
+
+function setupEventListeners() {
+  // Handle account changes
+  window.ethereum.on('accountsChanged', (accounts) => {
+    if (accounts.length === 0) {
+      // MetaMask is locked or user disconnected all accounts
+      userAddress = null;
+      updateConnectionUI();
+      showToast("Wallet disconnected", "info");
+    } else if (accounts[0] !== userAddress) {
+      // Account changed
+      userAddress = accounts[0];
+      updateConnectionUI();
+      showToast("Account changed", "info");
+      updateBalances();
+      updateEstimate();
+    }
+  });
+
+  // Handle chain changes
+  window.ethereum.on('chainChanged', (chainId) => {
+    if (chainId === AVALANCHE_CHAIN_ID) {
+      showToast("Connected to Avalanche", "success");
+      location.reload(); // Refresh to ensure everything works with the new chain
+    } else {
+      showToast(`Please switch to Avalanche (ChainID: ${AVALANCHE_CHAIN_ID})`, "error");
+    }
+  });
+}
+
+// Update DOMContentLoaded event
+window.addEventListener("DOMContentLoaded", () => {
+  populateTokens();
+  
+  // Check if already connected when page loads
+  if (window.ethereum) {
+    window.ethereum.request({ method: 'eth_accounts' })
+      .then(accounts => {
+        if (accounts.length > 0) {
+          connect(); // Auto-connect if already connected
+        }
+      });
+  }
+});
 function copyAddress(e) {
   e.stopPropagation();
   navigator.clipboard.writeText(userAddress);
