@@ -67,6 +67,50 @@ body {
 .connect-btn:hover {
   background: #801722;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.profile-wrapper {
+  font-size: 20px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.profile-dropdown {
+  display: none;
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  min-width: 180px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 999;
+}
+.profile-dropdown .profile-item {
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+.profile-dropdown .profile-item:hover {
+  background: #f8f8f8;
+}
+.profile-dropdown .profile-address {
+  padding: 10px;
+  font-size: 13px;
+  color: #555;
+  border-bottom: 1px solid #eee;
+}
 
 /* Swap Container */
 .swap-container {
