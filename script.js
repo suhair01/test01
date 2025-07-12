@@ -1,5 +1,4 @@
 // RubySwap Final Script: Integrated AVAX/WAVAX, Slippage, Profile, and Swap
-
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
@@ -51,7 +50,6 @@ async function populateTokens() {
     opt.innerText = t.symbol;
     inSel.appendChild(opt.cloneNode(true));
     outSel.appendChild(opt.cloneNode(true));
-
     if (t.address !== "AVAX") {
       const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
       tokenDecimals[t.address] = await contract.decimals();
@@ -83,7 +81,6 @@ function reverseTokens() {
 
 async function connect() {
   if (!window.ethereum) return alert("Please install MetaMask");
-
   try {
     await window.ethereum.request({ method: "eth_requestAccounts" });
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
@@ -132,9 +129,7 @@ async function updateBalances() {
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
 
   const getBal = async (t) => {
-    if (t.address === "AVAX") {
-      return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
-    }
+    if (t.address === "AVAX") return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
     const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
     const bal = await contract.balanceOf(userAddress);
     const dec = tokenDecimals[t.address] || 18;
@@ -149,7 +144,6 @@ async function updateEstimate() {
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
   if (!amt || isNaN(amt)) return;
-
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
@@ -162,20 +156,19 @@ async function updateEstimate() {
   try {
     const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
     const est = ethers.formatUnits(result[1], decOut);
-    document.getElementById("tokenOutAmount").value =
-      tokenOut.address === "AVAX"
-        ? parseFloat(est).toFixed(4)
-        : Math.floor(parseFloat(est));
-  } catch (err) {
+    document.getElementById("tokenOutAmount").value = tokenOut.address === "AVAX" ? parseFloat(est).toFixed(4) : Math.floor(parseFloat(est));
+  } catch {
     document.getElementById("tokenOutAmount").value = "";
   }
 }
 
+// ✅ SLIPPAGE-INTEGRATED SWAP
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
   const decIn = tokenDecimals[tokenIn.address] || 18;
+  const decOut = tokenDecimals[tokenOut.address] || 18;
   const amountIn = ethers.parseUnits(amt, decIn);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
@@ -184,19 +177,27 @@ async function swap() {
     tokenOut.address === "AVAX" ? WAVAX : tokenOut.address
   ];
 
+  const slippageInput = parseFloat(document.getElementById("slippage").value);
+  const slippagePercent = isNaN(slippageInput) ? 1 : slippageInput;
+
   try {
+    const expectedOut = await arenaRouter.getAmountsOut(amountIn, path);
+    const rawOut = expectedOut[1];
+    const minOut = rawOut - (rawOut * slippagePercent) / 100n;
+
     if (tokenIn.address === "AVAX") {
-      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
+      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(minOut, path, to, deadline, { value: amountIn });
     } else {
       const tokenContract = new ethers.Contract(tokenIn.address, ERC20_ABI, signer);
       const allowance = await tokenContract.allowance(to, routerAddress);
       if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
       if (tokenOut.address === "AVAX") {
-        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, minOut, path, to, deadline);
       } else {
-        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, minOut, path, to, deadline);
       }
     }
+
     showToast("Swap submitted!", "success");
   } catch (err) {
     showToast("Swap failed!", "error");
@@ -204,13 +205,12 @@ async function swap() {
 }
 
 function setPercentage(pct) {
-  const balText = document.getElementById("balanceIn").innerText.split(":"[1])?.trim();
+  const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
   if (isNaN(bal)) return;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const val = (bal * pct / 100);
-  document.getElementById("tokenInAmount").value =
-    tokenIn.address === "AVAX" ? parseFloat(val).toFixed(4) : Math.floor(parseFloat(val));
+  document.getElementById("tokenInAmount").value = tokenIn.address === "AVAX" ? parseFloat(val).toFixed(4) : Math.floor(parseFloat(val));
   updateEstimate();
 }
 
