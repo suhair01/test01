@@ -4,41 +4,38 @@
   <meta charset="UTF-8" />
   <title>Avalyfi</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Avalyfi - Seamless DEX on Avalanche" />
+  <link rel="icon" href="/logo.jpg" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-  <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
-      <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
+      <img src="logo.jpg" alt="Avaly Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
-  <div class="header-actions">
-  <button class="connect-btn" onclick="connect()">Connect Wallet</button>
-  <div class="profile-wrapper" onclick="toggleProfileDropdown(event)">
-    🧑 
-    <div class="profile-dropdown" id="profileDropdown">
-  <div class="profile-header">
-    <img id="profilePic" src="default-avatar.png" class="profile-avatar" />
-    <div class="profile-info">
-      <div class="profile-name" id="profileName">Unnamed</div>
-      <div class="profile-points">Points: <span id="profilePoints">0</span></div>
-      <div class="profile-address" id="profileAddress">Not Connected</div>
+    <div class="header-actions">
+      <button class="connect-btn" onclick="connect()">Connect Wallet</button>
+      <div class="profile-wrapper" onclick="toggleProfileDropdown(event)">
+        🧑 
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-header">
+            <img id="profilePic" src="default-avatar.png" class="profile-avatar" />
+            <div class="profile-info">
+              <div class="profile-name" id="profileName">Unnamed</div>
+              <div class="profile-points">Points: <span id="profilePoints">0</span></div>
+              <div class="profile-address" id="profileAddress">Not Connected</div>
+            </div>
+          </div>
+          <div class="profile-item" onclick="showToast('My Tokens (Coming Soon)')">My Tokens</div>
+          <div class="profile-item" onclick="showToast('Transaction History (Coming Soon)')">Transaction History</div>
+          <div class="profile-item" onclick="disconnect()">Disconnect</div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="profile-item" onclick="showToast('My Tokens (Coming Soon)')">My Tokens</div>
-  <div class="profile-item" onclick="showToast('Transaction History (Coming Soon)')">Transaction History</div>
-  <div class="profile-item" onclick="disconnect()">Disconnect</div>
-</div>
 
-  
-  </div>
-</div>
-
-  </div>
-
-  <!-- Swap UI -->
   <div class="swap-container">
     <div class="top-actions">
       <button class="icon-btn refresh-btn" onclick="location.reload()">
@@ -62,11 +59,11 @@
       <div class="token-row">
         <div class="token-select">
           <img id="inLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+          <select id="tokenInSelect"></select>
         </div>
         <div class="balance" id="balanceIn">Balance: 0</div>
       </div>
-      <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
+      <input class="amount-input" id="tokenInAmount" placeholder="0.0">
       <div class="percentage-buttons">
         <button onclick="setPercentage(25)">25%</button>
         <button onclick="setPercentage(50)">50%</button>
@@ -80,7 +77,7 @@
       <div class="token-row">
         <div class="token-select">
           <img id="outLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+          <select id="tokenOutSelect"></select>
         </div>
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
@@ -90,7 +87,6 @@
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
   </div>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-top">
@@ -119,7 +115,6 @@
   </footer>
 
   <div id="toastContainer"></div>
-
   <script src="script.js"></script>
 </body>
 </html>
