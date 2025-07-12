@@ -19,20 +19,20 @@
       <button class="connect-btn" onclick="connect()">Connect Wallet</button>
       <div class="profile-wrapper" onclick="toggleProfileDropdown(event)">
         🧑 
-        <div class="profile-dropdown" id="profileDropdown">
-          <div class="profile-header">
-            <img id="profilePic" src="default-avatar.png" class="profile-avatar" />
-            <div class="profile-info">
-              <div class="profile-name" id="profileName">Unnamed</div>
-              <div class="profile-points">Points: <span id="profilePoints">0</span></div>
-              <div class="profile-address" id="profileAddress">Not Connected</div>
-            </div>
-          </div>
-          <div class="profile-item" onclick="showToast('My Tokens (Coming Soon)')">My Tokens</div>
-          <div class="profile-item" onclick="showToast('Transaction History (Coming Soon)')">Transaction History</div>
-          <div class="profile-item" onclick="disconnect()">Disconnect</div>
-        </div>
-      </div>
+       <div class="profile-dropdown" id="profileDropdown">
+  <div class="profile-header">
+    <img id="profilePic" src="default-avatar.png" class="profile-avatar" />
+    <div class="profile-info">
+      <div class="profile-name" id="profileName">Unnamed</div>
+      <div class="profile-points">Points: <span id="profilePoints">0</span></div>
+      <div class="profile-address" id="profileAddress">Not Connected</div>
+    </div>
+  </div>
+  <div class="profile-item" onclick="viewTransactions()">🧾 My Transactions</div>
+  <div class="profile-item" onclick="showHoldings()">💳 Token Holdings</div>
+  <div class="profile-item" onclick="disconnect()">🔌 Disconnect</div>
+</div>
+
     </div>
   </div>
 
