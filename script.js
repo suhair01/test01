@@ -3,6 +3,14 @@ const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee 
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
+const AVALANCHE_PARAMS = {
+  chainId: '0xA86A',
+  chainName: 'Avalanche C-Chain',
+  nativeCurrency: { name: 'Avalanche', symbol: 'AVAX', decimals: 18 },
+  rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
+  blockExplorerUrls: ['https://snowtrace.io']
+};
+
 const ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) view returns (uint[] memory)",
   "function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)",
@@ -74,17 +82,58 @@ function reverseTokens() {
 
 async function connect() {
   if (!window.ethereum) return alert("Install MetaMask");
-  await window.ethereum.request({ method: "eth_requestAccounts" });
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-  router = new ethers.Contract(routerAddress, ABI, signer); // Fee router for swap
-  arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider); // Arena router for estimation
-  userAddress = await signer.getAddress();
-  document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
-  showToast("Wallet connected!", "success");
 
-  document.getElementById("swapBtn").disabled = false;
-  updateBalances(); updateEstimate();
+  try {
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (chainId !== AVALANCHE_PARAMS.chainId) {
+      showToast("Wrong Network! Switch to Avalanche", "error");
+      document.getElementById("switchNetworkBtn").style.display = "block";
+      return;
+    }
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    router = new ethers.Contract(routerAddress, ABI, signer);
+    arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
+    userAddress = await signer.getAddress();
+
+    document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
+    document.getElementById("swapBtn").disabled = false;
+    document.getElementById("switchNetworkBtn").style.display = "none";
+
+    showToast("Wallet connected!", "success");
+    updateBalances(); updateEstimate();
+  } catch (err) {
+    console.error(err);
+    showToast("Wallet connection failed!", "error");
+  }
+}
+async function switchToAvalanche() {
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: AVALANCHE_PARAMS.chainId }]
+    });
+    location.reload();
+  } catch (err) {
+    if (err.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [AVALANCHE_PARAMS]
+        });
+        location.reload();
+      } catch (addError) {
+        showToast("Failed to add Avalanche", "error");
+        console.error(addError);
+      }
+    } else {
+      showToast("Switch network failed!", "error");
+      console.error(err);
+    }
+  }
 }
 
 function copyAddress(e) {
