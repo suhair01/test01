@@ -205,10 +205,16 @@ function toggleProfileDropdown(event) {
   dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
 }
 
-window.addEventListener("click", function () {
+window.addEventListener("click", function (event) {
   const dropdown = document.getElementById("profileDropdown");
-  dropdown.style.display = "none";
+  const wrapper = document.querySelector(".profile-wrapper");
+
+  // Only hide dropdown if clicked outside the wrapper
+  if (!wrapper.contains(event.target)) {
+    dropdown.style.display = "none";
+  }
 });
+
 
 async function updateBalances() {
   if (!userAddress) return;
