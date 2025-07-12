@@ -124,6 +124,8 @@ async function connect() {
     router = new ethers.Contract(routerAddress, ABI, signer);
     arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
     userAddress = await signer.getAddress();
+    document.getElementById("profileAddress").innerText = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+
 
     // Show address in UI
     document.querySelector(".connect-btn").innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
@@ -322,6 +324,9 @@ window.swap = swap;
 window.setPercentage = setPercentage;
 window.toggleSlippage = toggleSlippage;
 window.switchToAvalanche = switchToAvalanche;
+window.toggleProfileDropdown = toggleProfileDropdown;
+window.disconnect = disconnect;
+
 
 
 function showToast(msg, type = 'info') {
