@@ -117,6 +117,7 @@ async function connect() {
         }
       }
     }
+   
 
     // Continue connecting wallet
     provider = new ethers.BrowserProvider(window.ethereum);
@@ -175,6 +176,39 @@ function copyAddress(e) {
   showToast("Address copied!", "info");
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
+async function getUserProfile(address) {
+  try {
+    const res = await fetch(`https://your-api.com/profile/${address}`);
+    const data = await res.json();
+    if (!data) return;
+
+    document.getElementById("profileName").innerText = data.name || "Unnamed";
+    document.getElementById("profilePoints").innerText = data.points || "0";
+    document.getElementById("profilePic").src = data.avatar || "default-avatar.png";
+  } catch (e) {
+    console.error("Profile load failed", e);
+  }
+}
+ function disconnect() {
+  provider = null;
+  signer = null;
+  userAddress = null;
+  document.getElementById("profileAddress").innerText = "Not Connected";
+  document.querySelector(".connect-btn").innerHTML = "Connect Wallet";
+  document.getElementById("swapBtn").disabled = true;
+  showToast("Wallet disconnected", "info");
+}
+
+function toggleProfileDropdown(event) {
+  event.stopPropagation();
+  const dropdown = document.getElementById("profileDropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+}
+
+window.addEventListener("click", function () {
+  const dropdown = document.getElementById("profileDropdown");
+  dropdown.style.display = "none";
+});
 
 async function updateBalances() {
   if (!userAddress) return;
