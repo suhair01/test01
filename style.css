@@ -362,17 +362,28 @@ body {
   background: #333;
 }
 
-.token-left {
+.token-select {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.token-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
 }
 
 .token-logo {
   width: 24px;
   height: 24px;
   border-radius: 50%;
+  border: 1px solid #ccc;
 }
+
 
 .token-symbol {
   font-weight: bold;
