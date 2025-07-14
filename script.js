@@ -336,3 +336,69 @@ function showToast(msg, type = 'info') {
     toast.remove();
   }, 3500);
 }
+
+let selectedField = null;
+
+function openModal(field) {
+  selectedField = field; // 'in' or 'out'
+  document.getElementById("tokenModal").style.display = "flex";
+  renderTokenList();
+}
+
+function closeModal() {
+  document.getElementById("tokenModal").style.display = "none";
+  document.getElementById("tokenSearch").value = "";
+}
+
+function renderTokenList() {
+  const list = document.getElementById("tokenList");
+  list.innerHTML = "";
+  tokens.forEach(t => {
+    const item = document.createElement("div");
+    item.className = "token-item";
+    item.onclick = () => selectToken(t);
+
+    item.innerHTML = `
+      <div class="token-left">
+        <img src="${t.logo}" class="token-logo" />
+        <div>
+          <div class="token-symbol">${t.symbol}</div>
+          <div class="token-address">${shorten(t.address)}</div>
+        </div>
+      </div>
+      <div class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('${t.address}')">📋</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function selectToken(token) {
+  const selectEl = selectedField === "in" ? document.getElementById("tokenInSelect") : document.getElementById("tokenOutSelect");
+  [...selectEl.options].forEach((opt, i) => {
+    if (JSON.parse(opt.value).address === token.address) {
+      selectEl.selectedIndex = i;
+    }
+  });
+  closeModal();
+  updateLogos();
+  updateBalances();
+  updateEstimate();
+}
+
+function filterTokens() {
+  const query = document.getElementById("tokenSearch").value.toLowerCase();
+  const items = document.querySelectorAll("#tokenList .token-item");
+  tokens.forEach((t, i) => {
+    const visible = t.symbol.toLowerCase().includes(query) || t.address.toLowerCase().includes(query);
+    items[i].style.display = visible ? "flex" : "none";
+  });
+}
+
+function shorten(addr) {
+  return addr === "AVAX" ? "AVAX" : addr.slice(0, 6) + "..." + addr.slice(-4);
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text);
+  showToast("Copied to clipboard", "info");
+}
