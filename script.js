@@ -25,6 +25,13 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)"
 ];
 
+function getMetaMaskProvider() {
+  if (window.ethereum?.providers?.length) {
+    return window.ethereum.providers.find(p => p.isMetaMask);
+  }
+  return window.ethereum;
+}
+
 function safeParse(val) {
   try { return JSON.parse(val); } catch { return null; }
 }
