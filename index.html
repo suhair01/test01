@@ -14,10 +14,13 @@
       <img src="logo.jpg" alt="Avaly Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
-   <div class="header-buttons">
+  <div class="header-buttons">
   <button class="connect-btn" onclick="connect()">Connect Wallet</button>
- <button class="profile-btn" onclick="toggleProfile()">👤 Profile</button>
+  <button class="profile-btn" onclick="toggleProfile()">👤 Profile</button>
+  <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
+</div>
 
+<!-- ✅ Profile popover goes outside -->
 <div id="profilePopover" class="profile-popover">
   <div class="profile-box">
     <div class="popover-header">
@@ -31,6 +34,7 @@
     </div>
   </div>
 </div>
+
 
 
     <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
