@@ -435,11 +435,18 @@ function copyToClipboard(text) {
 
 window.reloadEstimate = function () {
   const btn = document.querySelector(".reload-btn");
+
+  if (!btn) return;
+
+  // Add the spinning class
   btn.classList.add("active");
 
+  // Trigger updateEstimate
+  updateEstimate();
+
+  // Remove the spin after a short delay
   setTimeout(() => {
     btn.classList.remove("active");
-  }, 500);
-
-  updateEstimate(); // ✅ This must be defined
+  }, 400); // 400ms matches CSS transition
 };
+
