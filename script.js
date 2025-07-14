@@ -1,4 +1,3 @@
-
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.7.0/+esm";
 
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
@@ -118,33 +117,6 @@ function reverseTokens() {
 }
 
 async function connect() {
-  if (!window.ethereum) return alert("Install MetaMask");
-
-  try {
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-
-    const chainId = await window.ethereum.request({ method: "eth_chainId" });
-    if (chainId !== AVALANCHE_PARAMS.chainId) {
-      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: AVALANCHE_PARAMS.chainId }] });
-    }
-
-    provider = new ethers.BrowserProvider(window.ethereum);
-    signer = await provider.getSigner();
-    router = new ethers.Contract(routerAddress, ABI, signer);
-    userAddress = await signer.getAddress();
-
-    document.querySelector(".connect-btn").innerHTML =
-      `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
-
-    updateBalances();
-    updateEstimate();
-    showToast("Wallet connected", "success");
-  } catch (err) {
-    console.error(err);
-    showToast("Connection failed", "error");
-  }
-}
-async function connect() {
   if (!window.ethereum) {
     alert("Please install MetaMask");
     return;
@@ -158,13 +130,13 @@ async function connect() {
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: AVALANCHE_PARAMS.chainId }],
+          params: [{ chainId: AVALANCHE_PARAMS.chainId }]
         });
       } catch (err) {
         if (err.code === 4902) {
           await window.ethereum.request({
             method: "wallet_addEthereumChain",
-            params: [AVALANCHE_PARAMS],
+            params: [AVALANCHE_PARAMS]
           });
         } else {
           return showToast("Switch to Avalanche failed", "error");
@@ -179,6 +151,8 @@ async function connect() {
     document.querySelector(".connect-btn").innerHTML =
       `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
     showToast("Wallet connected!", "success");
+    updateBalances();
+    updateEstimate();
   } catch (err) {
     console.error(err);
     showToast("Connection failed!", "error");
@@ -203,28 +177,42 @@ async function updateBalances() {
 
 async function updateEstimate() {
   const amt = document.getElementById("tokenInAmount").value;
-  if (!amt || isNaN(amt)) return;
+  if (!amt || isNaN(amt)) {
+    document.getElementById("swapBtn").disabled = true;
+    return;
+  }
+
   const path = [
     selectedTokenIn.address === "AVAX" ? WAVAX : selectedTokenIn.address,
     selectedTokenOut.address === "AVAX" ? WAVAX : selectedTokenOut.address
   ];
+
   try {
-    const result = await arenaRouter.getAmountsOut(
+    const activeRouter = (selectedTokenIn.symbol === "ARENA" || selectedTokenOut.symbol === "ARENA") 
+      ? arenaRouter 
+      : router;
+
+    const result = await activeRouter.getAmountsOut(
       ethers.parseUnits(amt, tokenDecimals[selectedTokenIn.address]),
       path
     );
+
     const est = ethers.formatUnits(result[1], tokenDecimals[selectedTokenOut.address]);
-    document.getElementById("tokenOutAmount").value =
-      selectedTokenOut.address === "AVAX"
-        ? parseFloat(est).toFixed(4)
-        : Math.floor(est);
+    document.getElementById("tokenOutAmount").value = selectedTokenOut.address === "AVAX"
+      ? parseFloat(est).toFixed(4)
+      : Math.floor(est);
+
+    document.getElementById("swapBtn").disabled = false;
   } catch {
     document.getElementById("tokenOutAmount").value = "";
+    document.getElementById("swapBtn").disabled = true;
   }
 }
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
+  if (!amt || isNaN(amt)) return;
+
   const amountIn = ethers.parseUnits(amt, tokenDecimals[selectedTokenIn.address]);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
@@ -232,24 +220,43 @@ async function swap() {
     selectedTokenIn.address === "AVAX" ? WAVAX : selectedTokenIn.address,
     selectedTokenOut.address === "AVAX" ? WAVAX : selectedTokenOut.address
   ];
+
+  const activeRouter = (selectedTokenIn.symbol === "ARENA" || selectedTokenOut.symbol === "ARENA")
+    ? arenaRouter
+    : router;
+
   try {
     if (selectedTokenIn.address === "AVAX") {
-      await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
+      const tx = await activeRouter.swapExactAVAXForTokensSupportingFeeOnTransferTokens(
+        0, path, to, deadline, { value: amountIn }
+      );
+      await tx.wait();
     } else {
       const tokenContract = new ethers.Contract(selectedTokenIn.address, ERC20_ABI, signer);
-      const allowance = await tokenContract.allowance(to, routerAddress);
-      if (allowance < amountIn) await tokenContract.approve(routerAddress, ethers.MaxUint256);
+      const allowance = await tokenContract.allowance(userAddress, activeRouter.target);
+      if (allowance < amountIn) {
+        const approveTx = await tokenContract.approve(activeRouter.target, ethers.MaxUint256);
+        await approveTx.wait();
+      }
 
       if (selectedTokenOut.address === "AVAX") {
-        await router.swapExactTokensForAVAXSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+        const tx = await activeRouter.swapExactTokensForAVAXSupportingFeeOnTransferTokens(
+          amountIn, 0, path, to, deadline
+        );
+        await tx.wait();
       } else {
-        await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
+        const tx = await activeRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+          amountIn, 0, path, to, deadline
+        );
+        await tx.wait();
       }
     }
-    showToast("Swap submitted", "success");
+
+    showToast("Swap completed successfully ✅", "success");
+    updateBalances();
   } catch (err) {
-    console.error(err);
-    showToast("Swap failed", "error");
+    console.error("Swap failed:", err);
+    showToast("Swap failed ❌", "error");
   }
 }
 
