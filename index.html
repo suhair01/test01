@@ -36,10 +36,12 @@
 
     <div class="token-box">
       <div class="token-row">
-        <div class="token-select">
-  <button class="token-btn" onclick="openModal('in')">
+     <div class="token-select" onclick="openModal('in')">
+  <div class="token-display">
     <img id="inLogo" src="avaxlogo.png" class="token-logo" />
-  </button>
+    <span id="inSymbol">AVAX</span>
+    <span class="dropdown-arrow">▼</span>
+  </div>
   <select id="tokenInSelect" style="display:none;"></select>
 </div>
 
@@ -57,12 +59,15 @@
 
     <div class="token-box">
       <div class="token-row">
-       <div class="token-select">
-  <button class="token-btn" onclick="openModal('out')">
+   <div class="token-select" onclick="openModal('out')">
+  <div class="token-display">
     <img id="outLogo" src="usdc.png" class="token-logo" />
-  </button>
+    <span id="outSymbol">USDC</span>
+    <span class="dropdown-arrow">▼</span>
+  </div>
   <select id="tokenOutSelect" style="display:none;"></select>
 </div>
+
  
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
