@@ -15,8 +15,25 @@ body {
   color: var(--text);
   display: flex;
   flex-direction: column;
-  align-items: center;
   min-height: 100vh;
+}
+
+/* Center wrapper to vertically center swap */
+.center-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.container {
+  width: 90%;
+  max-width: 1024px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header and Footer */
@@ -44,11 +61,6 @@ body {
   border-radius: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-}
-.container {
-  width: 90%;
-  max-width: 1024px;
-  margin: 0 auto;
 }
 
 .header-left {
@@ -177,8 +189,7 @@ body {
   max-width: 360px;
   width: 100%;
   box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-  margin-top: 60px;
-  margin-bottom: 60px;
+  margin: 0 auto;
 }
 
 .top-actions {
