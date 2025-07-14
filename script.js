@@ -179,6 +179,10 @@ function copyAddress(e) {
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
 
+function openProfile() {
+  alert("Profile clicked!");
+}
+
 async function updateBalances() {
   if (!userAddress) return;
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
