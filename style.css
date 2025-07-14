@@ -507,3 +507,14 @@ body {
   border-radius: 50%;
   object-fit: contain;
 }
+.balance {
+  font-size: 13px;
+  color: #444;
+  margin-left: auto;
+  text-align: right;
+}
+.token-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
