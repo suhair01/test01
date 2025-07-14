@@ -8,45 +8,46 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
+
+<!-- Container to center everything -->
+<div class="container">
+
   <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
       <img src="logo.jpg" alt="Avaly Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
-<div class="header-buttons">
-  <button class="connect-btn" onclick="connect()">Connect Wallet</button>
+    <div class="header-buttons">
+      <button class="connect-btn" onclick="connect()">Connect Wallet</button>
 
-  <!-- 👤 Profile Button & Popover Wrapper -->
-  <div class="profile-wrapper">
-    <button class="profile-btn" onclick="toggleProfile()">👤 Profile</button>
-
-    <div id="profilePopover" class="profile-popover">
-      <div class="profile-box">
-        <div class="popover-header">
-          <strong>👤 Wallet</strong>
-          <button class="close-profile" onclick="toggleProfile()">×</button>
-        </div>
-        <div class="profile-wallet">
-          <div class="wallet-row">
-            <code id="profileAddress">0x...</code>
-            <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy">📋</button>
-            <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View">🔗</a>
+      <div class="profile-wrapper">
+        <button class="profile-btn" onclick="toggleProfile()">👤 Profile</button>
+        <div id="profilePopover" class="profile-popover">
+          <div class="profile-box">
+            <div class="popover-header">
+              <strong>👤 Wallet</strong>
+              <button class="close-profile" onclick="toggleProfile()">×</button>
+            </div>
+            <div class="profile-wallet">
+              <div class="wallet-row">
+                <code id="profileAddress">0x...</code>
+                <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy">📋</button>
+                <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View">🔗</a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
     </div>
   </div>
-
-  <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
-</div>
-
 
   <!-- Swap UI -->
   <div class="swap-container">
     <div class="top-actions">
-     <button class="reload-btn" onclick="location.reload()" title="Reload">🔄</button>
-
+      <button class="reload-btn" onclick="location.reload()" title="Reload">🔄</button>
       <div class="settings-wrapper">
         <button class="icon-btn settings-btn" onclick="toggleSlippage()">⚙️</button>
         <div class="slippage-popup" id="slippagePopup">
@@ -61,15 +62,14 @@
 
     <div class="token-box">
       <div class="token-row">
-     <div class="token-select" onclick="openModal('in')">
-  <div class="token-display">
-    <img id="inLogo" src="avaxlogo.png" class="token-logo" />
-    <span id="inSymbol">AVAX</span>
-    <span class="dropdown-arrow">▼</span>
-  </div>
-  <select id="tokenInSelect" style="display:none;"></select>
-</div>
-
+        <div class="token-select" onclick="openModal('in')">
+          <div class="token-display">
+            <img id="inLogo" src="avaxlogo.png" class="token-logo" />
+            <span id="inSymbol">AVAX</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          <select id="tokenInSelect" style="display:none;"></select>
+        </div>
         <div class="balance" id="balanceIn">Balance: 0</div>
       </div>
       <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
@@ -84,16 +84,14 @@
 
     <div class="token-box">
       <div class="token-row">
-   <div class="token-select" onclick="openModal('out')">
-  <div class="token-display">
-    <img id="outLogo" src="usdc.png" class="token-logo" />
-    <span id="outSymbol">USDC</span>
-    <span class="dropdown-arrow">▼</span>
-  </div>
-  <select id="tokenOutSelect" style="display:none;"></select>
-</div>
-
- 
+        <div class="token-select" onclick="openModal('out')">
+          <div class="token-display">
+            <img id="outLogo" src="usdc.png" class="token-logo" />
+            <span id="outSymbol">USDC</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          <select id="tokenOutSelect" style="display:none;"></select>
+        </div>
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
       <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
@@ -114,7 +112,6 @@
     </div>
   </div>
 
-  
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
@@ -142,7 +139,9 @@
     </div>
   </footer>
 
-  <div id="toastContainer"></div>
-  <script src="script.js"></script>
+</div> <!-- END .container -->
+
+<div id="toastContainer"></div>
+<script src="script.js"></script>
 </body>
 </html>
