@@ -139,22 +139,30 @@ function reverseTokens() {
 }
 async function connect() {
   if (!window.ethereum) return alert("Please install MetaMask");
+
   try {
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    await getMetaMaskProvider().request({ method: "eth_requestAccounts" });
+
+    const chainId = await getMetaMaskProvider().request({ method: 'eth_chainId' });
     if (chainId !== AVALANCHE_PARAMS.chainId) {
       try {
-        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: AVALANCHE_PARAMS.chainId }] });
+        await getMetaMaskProvider().request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: AVALANCHE_PARAMS.chainId }]
+        });
       } catch (err) {
         if (err.code === 4902) {
-          await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [AVALANCHE_PARAMS] });
+          await getMetaMaskProvider().request({
+            method: 'wallet_addEthereumChain',
+            params: [AVALANCHE_PARAMS]
+          });
         } else {
           return showToast("Please switch to Avalanche", "error");
         }
       }
     }
 
-    provider = new ethers.BrowserProvider(window.ethereum);
+    provider = new ethers.BrowserProvider(getMetaMaskProvider());
     signer = await provider.getSigner();
     router = new ethers.Contract(routerAddress, ABI, signer);
     arenaRouter = new ethers.Contract(arenaRouterAddress, ABI, provider);
