@@ -67,9 +67,14 @@ async function populateTokens() {
 function updateLogos() {
   const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
   const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+
   document.getElementById("inLogo").src = tokenIn.logo;
+  document.getElementById("inSymbol").innerText = tokenIn.symbol;
+
   document.getElementById("outLogo").src = tokenOut.logo;
+  document.getElementById("outSymbol").innerText = tokenOut.symbol;
 }
+
 
 function reverseTokens() {
   const inSel = document.getElementById("tokenInSelect");
