@@ -21,22 +21,22 @@
 </div>
 
 <!-- ✅ Profile popover goes outside -->
-<div id="profilePopover" class="profile-popover">
-  <div class="profile-box">
-    <div class="popover-header">
-      <strong>👤 Wallet</strong>
-      <button class="close-profile" onclick="toggleProfile()">×</button>
-    </div>
-    <div class="profile-wallet">
-      <div class="wallet-row">
-        <code id="profileAddress">0x...</code>
-        <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy address">📋</button>
-        <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View on Snowtrace">🔗</a>
+ <div id="profilePopover" class="profile-popover">
+    <div class="profile-box">
+      <div class="popover-header">
+        <strong>👤 Wallet</strong>
+        <button class="close-profile" onclick="toggleProfile()">×</button>
+      </div>
+      <div class="profile-wallet">
+        <div class="wallet-row">
+          <code id="profileAddress">0x...</code>
+          <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy">📋</button>
+          <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View">🔗</a>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
 
     <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
   </div>
