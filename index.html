@@ -14,32 +14,33 @@
       <img src="logo.jpg" alt="Avaly Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
-  <div class="header-buttons">
+<div class="header-buttons">
   <button class="connect-btn" onclick="connect()">Connect Wallet</button>
-  <button class="profile-btn" onclick="toggleProfile()">👤 Profile</button>
-  <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
-</div>
 
-<!-- ✅ Profile popover goes outside -->
- <div id="profilePopover" class="profile-popover">
-    <div class="profile-box">
-      <div class="popover-header">
-        <strong>👤 Wallet</strong>
-        <button class="close-profile" onclick="toggleProfile()">×</button>
-      </div>
-      <div class="profile-wallet">
-        <div class="wallet-row">
-          <code id="profileAddress">0x...</code>
-          <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy">📋</button>
-          <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View">🔗</a>
+  <!-- 👤 Profile Button & Popover Wrapper -->
+  <div class="profile-wrapper">
+    <button class="profile-btn" onclick="toggleProfile()">👤 Profile</button>
+
+    <div id="profilePopover" class="profile-popover">
+      <div class="profile-box">
+        <div class="popover-header">
+          <strong>👤 Wallet</strong>
+          <button class="close-profile" onclick="toggleProfile()">×</button>
+        </div>
+        <div class="profile-wallet">
+          <div class="wallet-row">
+            <code id="profileAddress">0x...</code>
+            <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy">📋</button>
+            <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View">🔗</a>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
 </div>
 
-    <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
-  </div>
 
   <!-- Swap UI -->
   <div class="swap-container">
