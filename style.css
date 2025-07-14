@@ -459,14 +459,16 @@ body {
   to { opacity: 0; transform: translateY(20px); }
 }
 
+/* Profile Button Wrapper */
 .profile-wrapper {
   position: relative;
   display: inline-block;
 }
 
+/* Popover Style */
 .profile-popover {
   position: absolute;
-  top: 110%; /* just below the button */
+  top: 120%;
   right: 0;
   display: none;
   z-index: 1000;
@@ -479,6 +481,13 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   min-width: 250px;
   border: 1px solid #eee;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Simple fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .popover-header {
@@ -497,27 +506,20 @@ body {
   color: #888;
 }
 
-.profile-wallet {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .wallet-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  background: #f8f8f8;
+  background: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 10px;
   padding: 6px 10px;
+  font-size: 13px;
 }
 
-.profile-wallet code {
+.wallet-row code {
   font-family: monospace;
-  font-size: 13px;
-  color: #333;
+  color: #444;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -535,3 +537,82 @@ body {
 .icon-btn:hover {
   opacity: 1;
 }
+/* Profile Button Wrapper */
+.profile-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* Popover Style */
+.profile-popover {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  display: none;
+  z-index: 1000;
+}
+
+.profile-box {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 250px;
+  border: 1px solid #eee;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Simple fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.close-profile {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+}
+
+.wallet-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.wallet-row code {
+  font-family: monospace;
+  color: #444;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.icon-btn:hover {
+  opacity: 1;
+}
+
