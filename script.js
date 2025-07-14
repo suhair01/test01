@@ -178,9 +178,6 @@ function copyAddress(e) {
   showToast("Address copied!", "info");
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
-function openProfile() {
-  alert("Profile clicked!");
-}
 
 function toggleProfile() {
   const el = document.getElementById("profilePopover");
