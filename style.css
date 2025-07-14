@@ -38,6 +38,13 @@ body {
   box-shadow: 0 8px 30px rgba(0,0,0,0.15);
   margin: auto;
 }
+.center-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 10px;
+}
 
 .header-bar, .footer {
   width: 90%;
