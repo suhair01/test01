@@ -532,9 +532,35 @@ body {
 
 .icon-btn:hover {
   opacity: 1;
+  padding: 4px;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .swap-container {
+    margin-top: 30px;
+    margin-bottom: 30px;
+    padding: 12px;
+  }
+
+  .header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .footer-content {
+    padding: 20px 16px;
+  }
+
+  .profile-popover {
+    right: auto;
+    left: 0;
+    top: 100%;
+    margin-top: 6px;
+  }
 }
