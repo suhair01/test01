@@ -345,17 +345,14 @@ document.getElementById("tokenInAmount").addEventListener("input", function (e) 
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 
+// Clean final exports
 window.connect = connect;
 window.reverseTokens = reverseTokens;
 window.swap = swap;
 window.setPercentage = setPercentage;
 window.toggleSlippage = toggleSlippage;
 window.switchToAvalanche = switchToAvalanche;
-window.openProfile = openProfile;
-window.closeProfile = closeProfile;
 window.toggleProfile = toggleProfile;
-
-
 
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
