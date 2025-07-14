@@ -458,3 +458,23 @@ body {
 @keyframes fadeOut {
   to { opacity: 0; transform: translateY(20px); }
 }
+
+.profile-wallet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f3f3;
+  padding: 10px;
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  word-break: break-all;
+}
+.profile-wallet code {
+  background: none;
+  padding: 0;
+  border: none;
+}
+.modal-content .profile-section {
+  margin-top: 10px;
+}
