@@ -336,3 +336,87 @@ function showToast(msg, type = 'info') {
     toast.remove();
   }, 3500);
 }
+let selectingType = "in"; // 'in' or 'out'
+
+function openTokenModal(type) {
+  selectingType = type;
+  document.getElementById("tokenModal").style.display = "flex";
+  renderTokenList();
+}
+
+function closeTokenModal() {
+  document.getElementById("tokenModal").style.display = "none";
+}
+
+function renderTokenList() {
+  const list = document.getElementById("tokenList");
+  list.innerHTML = "";
+
+  tokens.forEach(t => {
+    const item = document.createElement("div");
+    item.className = "token-item";
+    item.innerHTML = `
+      <img src="${t.logo}" />
+      <div class="token-info">
+        <div class="token-symbol">${t.symbol}</div>
+        <div class="token-address">${t.address.slice(0,6)}...${t.address.slice(-4)}</div>
+      </div>
+      <div class="copy-btn" onclick="event.stopPropagation(); copyText('${t.address}')">📋</div>
+    `;
+    item.onclick = () => {
+      if (selectingType === "in") {
+        selectedTokenIn = t;
+        document.getElementById("inLogo").src = t.logo;
+        document.getElementById("tokenInSymbol").innerText = t.symbol;
+      } else {
+        selectedTokenOut = t;
+        document.getElementById("outLogo").src = t.logo;
+        document.getElementById("tokenOutSymbol").innerText = t.symbol;
+      }
+      closeTokenModal();
+      updateEstimate();
+      updateBalances();
+    };
+    list.appendChild(item);
+  });
+}
+
+function filterTokens() {
+  const keyword = document.getElementById("tokenSearch").value.toLowerCase();
+  const filtered = tokens.filter(t => t.symbol.toLowerCase().includes(keyword) || t.address.toLowerCase().includes(keyword));
+  const list = document.getElementById("tokenList");
+  list.innerHTML = "";
+
+  filtered.forEach(t => {
+    const item = document.createElement("div");
+    item.className = "token-item";
+    item.innerHTML = `
+      <img src="${t.logo}" />
+      <div class="token-info">
+        <div class="token-symbol">${t.symbol}</div>
+        <div class="token-address">${t.address.slice(0,6)}...${t.address.slice(-4)}</div>
+      </div>
+      <div class="copy-btn" onclick="event.stopPropagation(); copyText('${t.address}')">📋</div>
+    `;
+    item.onclick = () => {
+      if (selectingType === "in") {
+        selectedTokenIn = t;
+        document.getElementById("inLogo").src = t.logo;
+        document.getElementById("tokenInSymbol").innerText = t.symbol;
+      } else {
+        selectedTokenOut = t;
+        document.getElementById("outLogo").src = t.logo;
+        document.getElementById("tokenOutSymbol").innerText = t.symbol;
+      }
+      closeTokenModal();
+      updateEstimate();
+      updateBalances();
+    };
+    list.appendChild(item);
+  });
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text);
+  showToast("Copied address", "info");
+}
