@@ -432,3 +432,14 @@ function copyToClipboard(text) {
   navigator.clipboard.writeText(text);
   showToast("Copied to clipboard", "info");
 }
+// Reload animation toggle for the reload button
+window.reloadEstimate = function () {
+  const btn = document.querySelector(".reload-btn");
+  btn.classList.add("active");
+
+  setTimeout(() => {
+    btn.classList.remove("active");
+  }, 500); // Duration of spin
+
+  estimateOutput();
+};
