@@ -1,4 +1,4 @@
-// RubySwap Final Script: Integrated AVAX/WAVAX, Slippage, Profile, and Swap
+// RubySwap Final Script: SafeParse Integrated + Full AVAX/WAVAX Swap
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
@@ -24,6 +24,10 @@ const ERC20_ABI = [
   "function allowance(address owner, address spender) view returns (uint256)",
   "function decimals() view returns (uint8)"
 ];
+
+function safeParse(val) {
+  try { return JSON.parse(val); } catch { return null; }
+}
 
 let provider, signer, router, arenaRouter, userAddress;
 const tokenDecimals = {};
@@ -64,10 +68,10 @@ async function populateTokens() {
 }
 
 function updateLogos() {
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
-  document.getElementById("inLogo").src = tokenIn.logo;
-  document.getElementById("outLogo").src = tokenOut.logo;
+  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
+  const tokenOut = safeParse(document.getElementById("tokenOutSelect").value);
+  if (tokenIn) document.getElementById("inLogo").src = tokenIn.logo;
+  if (tokenOut) document.getElementById("outLogo").src = tokenOut.logo;
 }
 
 let currentSelect = 'in';
@@ -126,15 +130,6 @@ function selectToken(token) {
   updateBalances();
   updateEstimate();
 }
-function tokenDisplay(token) {
-  return `
-    <div class="token-display">
-      <img src="${token.logo}" alt="${token.symbol}" />
-      <span class="token-name">${token.symbol}</span>
-    </div>
-  `;
-}
-
 
 function reverseTokens() {
   const inSel = document.getElementById("tokenInSelect");
@@ -196,8 +191,9 @@ function toggleProfile() {
 
 async function updateBalances() {
   if (!userAddress) return;
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
+  const tokenOut = safeParse(document.getElementById("tokenOutSelect").value);
+  if (!tokenIn || !tokenOut) return;
 
   const getBal = async (t) => {
     if (t.address === "AVAX") return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
@@ -215,8 +211,9 @@ async function updateEstimate() {
   if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
   if (!amt || isNaN(amt)) return;
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
+  const tokenOut = safeParse(document.getElementById("tokenOutSelect").value);
+  if (!tokenIn || !tokenOut) return;
   const decIn = tokenDecimals[tokenIn.address] || 18;
   const decOut = tokenDecimals[tokenOut.address] || 18;
   const path = [
@@ -233,13 +230,13 @@ async function updateEstimate() {
   }
 }
 
-// ✅ SLIPPAGE-INTEGRATED SWAP
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
-  const tokenOut = JSON.parse(document.getElementById("tokenOutSelect").value);
+  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
+  const tokenOut = safeParse(document.getElementById("tokenOutSelect").value);
+  if (!tokenIn || !tokenOut) return showToast("Select tokens first", "error");
+
   const decIn = tokenDecimals[tokenIn.address] || 18;
-  const decOut = tokenDecimals[tokenOut.address] || 18;
   const amountIn = ethers.parseUnits(amt, decIn);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
@@ -279,7 +276,8 @@ function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
   if (isNaN(bal)) return;
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
+  if (!tokenIn) return;
   const val = (bal * pct / 100);
   document.getElementById("tokenInAmount").value = tokenIn.address === "AVAX" ? parseFloat(val).toFixed(4) : Math.floor(parseFloat(val));
   updateEstimate();
@@ -290,23 +288,9 @@ function toggleSlippage() {
   popup.style.display = popup.style.display === "block" ? "none" : "block";
 }
 
-window.addEventListener("click", function (e) {
-  const profileDropdown = document.getElementById("profileDropdown");
-  const profileWrapper = document.querySelector(".profile-wrapper");
-  const slippagePopup = document.getElementById("slippagePopup");
-  const slippageBtn = document.querySelector(".settings-btn");
-
-  if (profileDropdown && profileWrapper && !profileWrapper.contains(e.target)) {
-    profileDropdown.style.display = "none";
-  }
-  if (slippagePopup && slippageBtn && !slippagePopup.contains(e.target) && !slippageBtn.contains(e.target)) {
-    slippagePopup.style.display = "none";
-  }
-});
-
-window.addEventListener("DOMContentLoaded", populateTokens);
 document.getElementById("tokenInAmount").addEventListener("input", function (e) {
-  const tokenIn = JSON.parse(document.getElementById("tokenInSelect").value);
+  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
+  if (!tokenIn) return;
   let val = e.target.value.replace(/[^0-9.]/g, "");
   const parts = val.split(".");
   if (parts.length > 2) val = parts[0] + "." + parts[1];
@@ -322,13 +306,16 @@ document.getElementById("tokenInAmount").addEventListener("input", function (e) 
 
 document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
 document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
+window.addEventListener("DOMContentLoaded", populateTokens);
+window.addEventListener("click", function (e) {
+  const profileDropdown = document.getElementById("profileDropdown");
+  const profileWrapper = document.querySelector(".profile-wrapper");
+  const slippagePopup = document.getElementById("slippagePopup");
+  const slippageBtn = document.querySelector(".settings-btn");
 
-window.connect = connect;
-window.reverseTokens = reverseTokens;
-window.swap = swap;
-window.setPercentage = setPercentage;
-window.toggleSlippage = toggleSlippage;
-window.copyAddress = copyAddress;
+  if (profileDropdown && profileWrapper && !profileWrapper.contains(e.target)) profileDropdown.style.display = "none";
+  if (slippagePopup && slippageBtn && !slippagePopup.contains(e.target) && !slippageBtn.contains(e.target)) slippagePopup.style.display = "none";
+});
 
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
@@ -337,13 +324,9 @@ function showToast(msg, type = 'info') {
   document.getElementById('toastContainer').appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
 }
-function viewTransactions() {
-  showToast("Coming soon: View Transactions", "info");
-}
 
-function showHoldings() {
-  showToast("Coming soon: Token Holdings", "info");
-}
+function viewTransactions() { showToast("Coming soon: View Transactions", "info"); }
+function showHoldings() { showToast("Coming soon: Token Holdings", "info"); }
 
 function disconnect() {
   userAddress = null;
@@ -356,13 +339,20 @@ function disconnect() {
   document.getElementById("tokenOutAmount").value = "";
   showToast("Disconnected!", "info");
 }
-window.viewTransactions = viewTransactions;
-window.showHoldings = showHoldings;
-window.disconnect = disconnect;
 
 function toggleProfileDropdown(event) {
   event.stopPropagation();
   const dropdown = document.getElementById("profileDropdown");
   dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
 }
+
+window.connect = connect;
+window.reverseTokens = reverseTokens;
+window.swap = swap;
+window.setPercentage = setPercentage;
+window.toggleSlippage = toggleSlippage;
+window.copyAddress = copyAddress;
+window.viewTransactions = viewTransactions;
+window.showHoldings = showHoldings;
+window.disconnect = disconnect;
 window.toggleProfileDropdown = toggleProfileDropdown;
