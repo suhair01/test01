@@ -182,6 +182,25 @@ function copyAddress(e) {
 function openProfile() {
   alert("Profile clicked!");
 }
+function openProfile() {
+  if (!userAddress) return showToast("Connect wallet first", "error");
+
+  const shortened = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+  document.getElementById("profileAddress").innerText = shortened;
+  document.getElementById("snowtraceLink").href = `https://snowtrace.io/address/${userAddress}`;
+  document.getElementById("profileModal").style.display = "flex";
+}
+
+function closeProfile() {
+  document.getElementById("profileModal").style.display = "none";
+}
+
+function copyAddress() {
+  if (!userAddress) return;
+  navigator.clipboard.writeText(userAddress);
+  showToast("Address copied!", "info");
+}
+
 
 async function updateBalances() {
   if (!userAddress) return;
@@ -331,6 +350,8 @@ window.swap = swap;
 window.setPercentage = setPercentage;
 window.toggleSlippage = toggleSlippage;
 window.switchToAvalanche = switchToAvalanche;
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
 
 
 function showToast(msg, type = 'info') {
