@@ -68,7 +68,9 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
+
 
 .profile-btn {
   padding: 6px 14px;
