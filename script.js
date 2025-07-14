@@ -1,4 +1,4 @@
-<script type="module">
+
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.7.0/+esm";
 
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
@@ -301,4 +301,3 @@ window.filterTokens = filterTokens;
 window.setPercentage = setPercentage;
 
 window.addEventListener("DOMContentLoaded", populateTokens);
-</script>
