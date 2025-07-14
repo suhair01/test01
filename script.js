@@ -1,9 +1,8 @@
-// FULL INLINE JS CODE (token modal view, logos, slippage, swap, estimate, AVAX logic)
-// Due to length constraints, I will split it into multiple messages
-// Message 1/3 ⬇️
+<script type="module">
+import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.7.0/+esm";
 
-const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27"; // Your fee router 
-const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E"; // ArenaRouter for estimation
+const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
+const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
 
 const AVALANCHE_PARAMS = {
@@ -39,11 +38,10 @@ const tokens = [
   { symbol: "JOE", address: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanche/assets/0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd/logo.png" }
 ];
 
-let selectingType = "in";
 let selectedTokenIn = tokens[0];
 let selectedTokenOut = tokens[1];
+let selectingType = "in";
 
-// Continue in next message...
 async function populateTokens() {
   provider = new ethers.BrowserProvider(window.ethereum);
   router = new ethers.Contract(routerAddress, ABI, provider);
@@ -58,21 +56,14 @@ async function populateTokens() {
     }
   }
 
-  updateLogos();
-  updateBalances();
-  updateEstimate();
+  updateUI();
 }
 
-function updateLogos() {
+function updateUI() {
   document.getElementById("inLogo").src = selectedTokenIn.logo;
   document.getElementById("outLogo").src = selectedTokenOut.logo;
   document.getElementById("tokenInSymbol").innerText = selectedTokenIn.symbol;
   document.getElementById("tokenOutSymbol").innerText = selectedTokenOut.symbol;
-}
-
-function reverseTokens() {
-  [selectedTokenIn, selectedTokenOut] = [selectedTokenOut, selectedTokenIn];
-  updateLogos();
   updateBalances();
   updateEstimate();
 }
@@ -80,18 +71,18 @@ function reverseTokens() {
 function openTokenModal(type) {
   selectingType = type;
   document.getElementById("tokenModal").style.display = "flex";
-  renderTokenList();
+  document.getElementById("tokenSearch").value = "";
+  renderTokenList(tokens);
 }
 
 function closeTokenModal() {
   document.getElementById("tokenModal").style.display = "none";
 }
 
-function renderTokenList() {
-  const list = document.getElementById("tokenList");
-  list.innerHTML = "";
-
-  tokens.forEach(t => {
+function renderTokenList(list) {
+  const container = document.getElementById("tokenList");
+  container.innerHTML = "";
+  list.forEach(t => {
     const item = document.createElement("div");
     item.className = "token-item";
     item.innerHTML = `
@@ -100,20 +91,15 @@ function renderTokenList() {
         <div class="token-symbol">${t.symbol}</div>
         <div class="token-address">${t.address.slice(0, 6)}...${t.address.slice(-4)}</div>
       </div>
-      <div class="copy-btn" onclick="event.stopPropagation(); copyText('${t.address}')">📋</div>
+      <div class="copy-btn" onclick="event.stopPropagation(); navigator.clipboard.writeText('${t.address}'); showToast('Copied')">📋</div>
     `;
     item.onclick = () => {
-      if (selectingType === "in") {
-        selectedTokenIn = t;
-      } else {
-        selectedTokenOut = t;
-      }
+      if (selectingType === "in") selectedTokenIn = t;
+      else selectedTokenOut = t;
       closeTokenModal();
-      updateLogos();
-      updateBalances();
-      updateEstimate();
+      updateUI();
     };
-    list.appendChild(item);
+    container.appendChild(item);
   });
 }
 
@@ -123,63 +109,23 @@ function filterTokens() {
     t.symbol.toLowerCase().includes(keyword) ||
     t.address.toLowerCase().includes(keyword)
   );
-  const list = document.getElementById("tokenList");
-  list.innerHTML = "";
-  filtered.forEach(t => {
-    const item = document.createElement("div");
-    item.className = "token-item";
-    item.innerHTML = `
-      <img src="${t.logo}" />
-      <div class="token-info">
-        <div class="token-symbol">${t.symbol}</div>
-        <div class="token-address">${t.address.slice(0,6)}...${t.address.slice(-4)}</div>
-      </div>
-      <div class="copy-btn" onclick="event.stopPropagation(); copyText('${t.address}')">📋</div>
-    `;
-    item.onclick = () => {
-      if (selectingType === "in") {
-        selectedTokenIn = t;
-      } else {
-        selectedTokenOut = t;
-      }
-      closeTokenModal();
-      updateLogos();
-      updateBalances();
-      updateEstimate();
-    };
-    list.appendChild(item);
-  });
+  renderTokenList(filtered);
 }
 
-function copyText(text) {
-  navigator.clipboard.writeText(text);
-  showToast("Copied address", "info");
+function reverseTokens() {
+  [selectedTokenIn, selectedTokenOut] = [selectedTokenOut, selectedTokenIn];
+  updateUI();
 }
 
-// Final message (3/3) will include: connect(), swap(), updateEstimate(), and DOM bindings
 async function connect() {
   if (!window.ethereum) return alert("Install MetaMask");
 
   try {
     await window.ethereum.request({ method: "eth_requestAccounts" });
-    const chainId = await window.ethereum.request({ method: "eth_chainId" });
 
+    const chainId = await window.ethereum.request({ method: "eth_chainId" });
     if (chainId !== AVALANCHE_PARAMS.chainId) {
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: AVALANCHE_PARAMS.chainId }],
-        });
-      } catch (err) {
-        if (err.code === 4902) {
-          await window.ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [AVALANCHE_PARAMS],
-          });
-        } else {
-          return showToast("Switch to Avalanche failed", "error");
-        }
-      }
+      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: AVALANCHE_PARAMS.chainId }] });
     }
 
     provider = new ethers.BrowserProvider(window.ethereum);
@@ -189,34 +135,49 @@ async function connect() {
 
     document.querySelector(".connect-btn").innerHTML =
       `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
-    showToast("Wallet connected!", "success");
 
     updateBalances();
     updateEstimate();
+    showToast("Wallet connected", "success");
   } catch (err) {
     console.error(err);
-    showToast("Connection failed!", "error");
+    showToast("Connection failed", "error");
   }
 }
 
+async function updateBalances() {
+  if (!userAddress) return;
+  const getBal = async (t) => {
+    if (t.address === "AVAX") {
+      return parseFloat(ethers.formatEther(await provider.getBalance(userAddress))).toFixed(4);
+    }
+    const contract = new ethers.Contract(t.address, ERC20_ABI, provider);
+    const bal = await contract.balanceOf(userAddress);
+    const dec = tokenDecimals[t.address] || 18;
+    return parseFloat(ethers.formatUnits(bal, dec)).toFixed(4);
+  };
+
+  document.getElementById("balanceIn").innerText = "Balance: " + await getBal(selectedTokenIn);
+  document.getElementById("balanceOut").innerText = "Balance: " + await getBal(selectedTokenOut);
+}
+
 async function updateEstimate() {
-  if (!provider) return;
   const amt = document.getElementById("tokenInAmount").value;
   if (!amt || isNaN(amt)) return;
-
-  const decIn = tokenDecimals[selectedTokenIn.address] || 18;
-  const decOut = tokenDecimals[selectedTokenOut.address] || 18;
-
   const path = [
     selectedTokenIn.address === "AVAX" ? WAVAX : selectedTokenIn.address,
     selectedTokenOut.address === "AVAX" ? WAVAX : selectedTokenOut.address
   ];
-
   try {
-    const result = await arenaRouter.getAmountsOut(ethers.parseUnits(amt, decIn), path);
-    const est = ethers.formatUnits(result[1], decOut);
+    const result = await arenaRouter.getAmountsOut(
+      ethers.parseUnits(amt, tokenDecimals[selectedTokenIn.address]),
+      path
+    );
+    const est = ethers.formatUnits(result[1], tokenDecimals[selectedTokenOut.address]);
     document.getElementById("tokenOutAmount").value =
-      selectedTokenOut.address === "AVAX" ? parseFloat(est).toFixed(4) : Math.floor(est);
+      selectedTokenOut.address === "AVAX"
+        ? parseFloat(est).toFixed(4)
+        : Math.floor(est);
   } catch {
     document.getElementById("tokenOutAmount").value = "";
   }
@@ -224,17 +185,13 @@ async function updateEstimate() {
 
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
-  if (!amt || isNaN(amt)) return showToast("Enter amount", "error");
-
-  const decIn = tokenDecimals[selectedTokenIn.address] || 18;
-  const amountIn = ethers.parseUnits(amt, decIn);
+  const amountIn = ethers.parseUnits(amt, tokenDecimals[selectedTokenIn.address]);
   const to = userAddress;
   const deadline = Math.floor(Date.now() / 1000) + 600;
   const path = [
     selectedTokenIn.address === "AVAX" ? WAVAX : selectedTokenIn.address,
     selectedTokenOut.address === "AVAX" ? WAVAX : selectedTokenOut.address
   ];
-
   try {
     if (selectedTokenIn.address === "AVAX") {
       await router.swapExactAVAXForTokensSupportingFeeOnTransferTokens(0, path, to, deadline, { value: amountIn });
@@ -249,7 +206,6 @@ async function swap() {
         await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, 0, path, to, deadline);
       }
     }
-
     showToast("Swap submitted", "success");
   } catch (err) {
     console.error(err);
@@ -257,25 +213,45 @@ async function swap() {
   }
 }
 
-// Input handlers
-document.getElementById("tokenInAmount").addEventListener("input", e => {
+function copyAddress(e) {
+  e.stopPropagation();
+  navigator.clipboard.writeText(userAddress);
+  e.target.innerText = "✅";
+  showToast("Copied!", "info");
+  setTimeout(() => (e.target.innerText = "📋"), 1000);
+}
+
+function setPercentage(pct) {
+  const bal = parseFloat(document.getElementById("balanceIn").innerText.split(":")[1]);
+  const val = (bal * pct / 100).toFixed(4);
+  document.getElementById("tokenInAmount").value =
+    selectedTokenIn.address === "AVAX" ? val : Math.floor(val);
+  updateEstimate();
+}
+
+function showToast(msg, type = "info") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerText = msg;
+  document.getElementById("toastContainer").appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+document.getElementById("tokenInAmount").addEventListener("input", (e) => {
   let val = e.target.value.replace(/[^0-9.]/g, "");
   const parts = val.split(".");
   if (parts.length > 2) val = parts[0] + "." + parts[1];
-
-  if (selectedTokenIn.address === "AVAX") {
-    if (parts[1] && parts[1].length > 4) parts[1] = parts[1].substring(0, 4);
+  if (selectedTokenIn.address === "AVAX" && parts[1] && parts[1].length > 4) {
+    parts[1] = parts[1].substring(0, 4);
     val = parts.join(".");
-  } else {
+  } else if (selectedTokenIn.address !== "AVAX") {
     val = parts[0];
-    if (parts[1]) showToast(`Rounded down to ${val}`, "info");
+    if (parts[1]) showToast("Decimals removed", "info");
   }
-
   e.target.value = val;
   updateEstimate();
 });
 
-// Expose to window
 window.connect = connect;
 window.swap = swap;
 window.reverseTokens = reverseTokens;
@@ -283,3 +259,6 @@ window.openTokenModal = openTokenModal;
 window.closeTokenModal = closeTokenModal;
 window.filterTokens = filterTokens;
 window.setPercentage = setPercentage;
+
+window.addEventListener("DOMContentLoaded", populateTokens);
+</script>
