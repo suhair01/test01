@@ -7,7 +7,7 @@
   <meta name="description" content="Avalyfi - Seamless DEX on Avalanche" />
   <link rel="icon" href="/logo.jpg" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 </head>
 <body>
   <div class="header-bar">
@@ -19,20 +19,20 @@
       <button class="connect-btn" onclick="connect()">Connect Wallet</button>
       <div class="profile-wrapper" onclick="toggleProfileDropdown(event)">
         🧑 
-       <div class="profile-dropdown" id="profileDropdown">
-  <div class="profile-header">
-    <img id="profilePic" src="default-avatar.png" class="profile-avatar" />
-    <div class="profile-info">
-      <div class="profile-name" id="profileName">Unnamed</div>
-      <div class="profile-points">Points: <span id="profilePoints">0</span></div>
-      <div class="profile-address" id="profileAddress">Not Connected</div>
-    </div>
-  </div>
-  <div class="profile-item" onclick="viewTransactions()">🧾 My Transactions</div>
-  <div class="profile-item" onclick="showHoldings()">💳 Token Holdings</div>
-  <div class="profile-item" onclick="disconnect()">🔌 Disconnect</div>
-</div>
-</div>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-header">
+            <img id="profilePic" src="default-avatar.png" class="profile-avatar" />
+            <div class="profile-info">
+              <div class="profile-name" id="profileName">Unnamed</div>
+              <div class="profile-points">Points: <span id="profilePoints">0</span></div>
+              <div class="profile-address" id="profileAddress">Not Connected</div>
+            </div>
+          </div>
+          <div class="profile-item" onclick="viewTransactions()">🧾 My Transactions</div>
+          <div class="profile-item" onclick="showHoldings()">💳 Token Holdings</div>
+          <div class="profile-item" onclick="disconnect()">🔌 Disconnect</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -55,55 +55,59 @@
       </div>
     </div>
 
-   <div class="token-box">
-  <div class="token-row">
-    <div class="token-select">
-      <div class="custom-token-select" onclick="openTokenModal('in')">
-        <img id="inLogo" src="gold.png" />
-        <span id="tokenInSymbol">Select a token</span>
+    <div class="token-box">
+      <div class="token-row">
+        <div class="token-select">
+          <div class="custom-token-select" onclick="openTokenModal('in')">
+            <img id="inLogo" src="gold.png" />
+            <span id="tokenInSymbol">Select a token</span>
+          </div>
+        </div>
+        <div class="balance" id="balanceIn">Balance: 0</div>
+      </div>
+      <input class="amount-input" id="tokenInAmount" placeholder="0.0">
+      <div class="percentage-buttons">
+        <button onclick="setPercentage(25)">25%</button>
+        <button onclick="setPercentage(50)">50%</button>
+        <button onclick="setPercentage(100)">100%</button>
       </div>
     </div>
-    <div class="balance" id="balanceIn">Balance: 0</div>
-  </div>
-  <input class="amount-input" id="tokenInAmount" placeholder="0.0">
-  <div class="percentage-buttons">
-    <button onclick="setPercentage(25)">25%</button>
-    <button onclick="setPercentage(50)">50%</button>
-    <button onclick="setPercentage(100)">100%</button>
-  </div>
-</div>
 
     <button class="reverse-btn" onclick="reverseTokens()">⇅</button>
 
- <div class="token-box">
-  <div class="token-row">
-    <div class="token-select">
-      <div class="custom-token-select" onclick="openTokenModal('out')">
-        <img id="outLogo" src="gold.png" />
-        <span id="tokenOutSymbol">Select a token</span>
+    <div class="token-box">
+      <div class="token-row">
+        <div class="token-select">
+          <div class="custom-token-select" onclick="openTokenModal('out')">
+            <img id="outLogo" src="gold.png" />
+            <span id="tokenOutSymbol">Select a token</span>
+          </div>
+        </div>
+        <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
+      <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
     </div>
-    <div class="balance" id="balanceOut">Balance: 0</div>
-  </div>
-  <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
-</div>
 
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
   </div>
-<div class="token-modal" id="tokenModal">
-  <div class="token-modal-content">
-    <div class="token-modal-header">
-      <span>Select a token</span>
-      <button onclick="closeTokenModal()">✕</button>
+
+  <!-- Token Selection Modal -->
+  <div class="token-modal" id="tokenModal">
+    <div class="token-modal-content">
+      <div class="token-modal-header">
+        <span>Select a token</span>
+        <button onclick="closeTokenModal()">✕</button>
+      </div>
+      <div class="token-search">
+        <input type="text" id="tokenSearchInput" placeholder="Search name or paste address" oninput="filterTokens()" />
+      </div>
+      <div id="tokenListContainer"></div>
     </div>
-    <div class="token-search">
-      <input type="text" id="tokenSearchInput" placeholder="Search name or paste address" oninput="filterTokens()" />
-    </div>
-    <div id="tokenListContainer"></div>
   </div>
-</div>
-<input type="hidden" id="tokenInSelect" />
-<input type="hidden" id="tokenOutSelect" />
+
+  <!-- ✅ Corrected to real <select> tags for JS access -->
+  <select id="tokenInSelect" style="display:none;"></select>
+  <select id="tokenOutSelect" style="display:none;"></select>
 
   <footer class="footer">
     <div class="footer-content">
