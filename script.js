@@ -179,20 +179,18 @@ function copyAddress(e) {
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
 
-function openProfile() {
-  alert("Profile clicked!");
-}
-function openProfile() {
+function toggleProfile() {
+  const el = document.getElementById("profilePopover");
   if (!userAddress) return showToast("Connect wallet first", "error");
 
-  const shortened = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
-  document.getElementById("profileAddress").innerText = shortened;
-  document.getElementById("snowtraceLink").href = `https://snowtrace.io/address/${userAddress}`;
-  document.getElementById("profileModal").style.display = "flex";
-}
-
-function closeProfile() {
-  document.getElementById("profileModal").style.display = "none";
+  if (el.style.display === "block") {
+    el.style.display = "none";
+  } else {
+    const shortened = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+    document.getElementById("profileAddress").innerText = shortened;
+    document.getElementById("snowtraceLink").href = `https://snowtrace.io/address/${userAddress}`;
+    el.style.display = "block";
+  }
 }
 
 function copyAddress() {
