@@ -42,39 +42,32 @@
     </div>
 
     <div class="token-box">
-      <div class="token-row">
-        <div class="token-select" onclick="openModal('in')">
-  <img id="inLogo" src="" onerror="this.src='gold.png'" />
-  <select id="tokenInSelect" style="display:none"></select>
-</div>
-          <img id="inLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
-        </div>
-        <div class="balance" id="balanceIn">Balance: 0</div>
-      </div>
-      <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
-      <div class="percentage-buttons">
-        <button onclick="setPercentage(25)">25%</button>
-        <button onclick="setPercentage(50)">50%</button>
-        <button onclick="setPercentage(100)">100%</button>
-      </div>
+  <div class="token-row">
+    <div class="token-select" onclick="openModal('in')">
+      <img id="inLogo" src="" onerror="this.src='gold.png'" />
+      <select id="tokenInSelect" style="display:none"></select>
     </div>
-
+    <div class="balance" id="balanceIn">Balance: 0</div>
+  </div>
+  <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
+  <div class="percentage-buttons">
+    <button onclick="setPercentage(25)">25%</button>
+    <button onclick="setPercentage(50)">50%</button>
+    <button onclick="setPercentage(100)">100%</button>
+  </div>
+</div>
     <button class="reverse-btn" onclick="reverseTokens()">⇅</button>
 
-    <div class="token-box">
-      <div class="token-row">
-     <div class="token-select" onclick="openModal('out')">
-  <img id="outLogo" src="" onerror="this.src='gold.png'" />
-  <select id="tokenOutSelect" style="display:none"></select>
-</div>
-          <img id="outLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
-        </div>
-        <div class="balance" id="balanceOut">Balance: 0</div>
-      </div>
-      <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
+  <div class="token-box">
+  <div class="token-row">
+    <div class="token-select" onclick="openModal('out')">
+      <img id="outLogo" src="" onerror="this.src='gold.png'" />
+      <select id="tokenOutSelect" style="display:none"></select>
     </div>
+    <div class="balance" id="balanceOut">Balance: 0</div>
+  </div>
+  <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
+</div>
 
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
   </div>
