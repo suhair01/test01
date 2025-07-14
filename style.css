@@ -461,10 +461,10 @@ body {
 
 .profile-popover {
   position: absolute;
-  top: 60px; /* adjust depending on your button placement */
+  top: 64px;
   right: 24px;
   display: none;
-  z-index: 999;
+  z-index: 9999;
 }
 
 .profile-box {
