@@ -72,6 +72,17 @@
 
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
   </div>
+<!-- Token Selector Modal -->
+<div id="tokenModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">Select a token</span>
+      <button class="close-modal" onclick="closeModal()">×</button>
+    </div>
+    <input type="text" id="tokenSearch" placeholder="Search name or paste address" oninput="filterTokens()" />
+    <div id="tokenList"></div>
+  </div>
+</div>
 
   <!-- Footer -->
   <footer class="footer">
