@@ -18,6 +18,19 @@
   <button class="connect-btn" onclick="connect()">Connect Wallet</button>
   <button class="profile-btn" onclick="openProfile()">👤 Profile</button>
 </div>
+<div id="profilePopover" class="profile-popover">
+  <div class="profile-box">
+    <div class="popover-header">
+      <strong>👤 Wallet</strong>
+      <button class="close-profile" onclick="toggleProfile()">×</button>
+    </div>
+    <div class="profile-wallet">
+      <code id="profileAddress">0x...</code>
+      <button class="copy-btn" onclick="copyAddress()">📋</button>
+      <a id="snowtraceLink" href="#" target="_blank">🔗</a>
+    </div>
+  </div>
+</div>
 
     <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
   </div>
@@ -93,24 +106,6 @@
       <div id="tokenList"></div>
     </div>
   </div>
-
-<!-- Profile Modal -->
-<div id="profileModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span class="modal-title">👤 Profile</span>
-      <button class="close-modal" onclick="closeProfile()">×</button>
-    </div>
-    <div class="profile-section">
-      <p><strong>Wallet Address:</strong></p>
-      <div class="profile-wallet">
-        <code id="profileAddress">0x...</code>
-        <button class="copy-btn" onclick="copyAddress()">📋</button>
-        <a id="snowtraceLink" href="#" target="_blank">🔗</a>
-      </div>
-    </div>
-  </div>
-</div>
 
   
   <!-- Footer -->
