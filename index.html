@@ -28,13 +28,14 @@
       <button class="close-profile" onclick="toggleProfile()">×</button>
     </div>
     <div class="profile-wallet">
-      <code id="profileAddress">0x...</code>
-      <button class="copy-btn" onclick="copyToClipboard(userAddress)">📋</button>
-      <a id="snowtraceLink" href="#" target="_blank">🔗</a>
+      <div class="wallet-row">
+        <code id="profileAddress">0x...</code>
+        <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy address">📋</button>
+        <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View on Snowtrace">🔗</a>
+      </div>
     </div>
   </div>
 </div>
-
 
 
     <button id="switchNetworkBtn" style="display:none;" onclick="switchToAvalanche()">Switch to Avalanche</button>
