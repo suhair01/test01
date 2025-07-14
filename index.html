@@ -11,14 +11,11 @@
   <!-- Header -->
   <div class="header-bar">
     <div class="header-left">
-      <img src="logo.jpg" alt="RubySwap Logo" class="logo" />
+      <img src="logo.jpg" alt="Avaly Logo" class="logo" />
       <span class="brand-name">Avaly</span>
     </div>
     <button class="connect-btn" onclick="connect()">Connect Wallet</button>
-<button id="switchNetworkBtn" style="display:none; margin-top:10px; background:#ff5555; color:white; border:none; padding:10px 16px; border-radius:8px; font-weight:bold;" onclick="switchToAvalanche()">
-  Switch to Avalanche
-</button>
-
+    <button id="switchNetworkBtn" style="display:none; margin-top:10px;" onclick="switchToAvalanche()">Switch to Avalanche</button>
   </div>
 
   <!-- Swap UI -->
@@ -41,15 +38,16 @@
       </div>
     </div>
 
+    <!-- Token In -->
     <div class="token-box">
       <div class="token-row">
-        <div class="token-select">
-          <img id="inLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+        <div class="token-select" onclick="openTokenModal('in')">
+          <img id="inLogo" src="avaxlogo.png" />
+          <span id="tokenInSymbol">AVAX</span>
         </div>
         <div class="balance" id="balanceIn">Balance: 0</div>
       </div>
-      <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
+      <input class="amount-input" id="tokenInAmount" placeholder="0.0">
       <div class="percentage-buttons">
         <button onclick="setPercentage(25)">25%</button>
         <button onclick="setPercentage(50)">50%</button>
@@ -59,11 +57,12 @@
 
     <button class="reverse-btn" onclick="reverseTokens()">⇅</button>
 
+    <!-- Token Out -->
     <div class="token-box">
       <div class="token-row">
-        <div class="token-select">
-          <img id="outLogo" src="" onerror="this.src='gold.png'" />
-          <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
+        <div class="token-select" onclick="openTokenModal('out')">
+          <img id="outLogo" src="arenalogo.png" />
+          <span id="tokenOutSymbol">ARENA</span>
         </div>
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
@@ -71,6 +70,18 @@
     </div>
 
     <button class="btn" onclick="swap()" id="swapBtn" disabled>Swap</button>
+  </div>
+
+  <!-- Token Selection Modal -->
+  <div id="tokenModal" class="token-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Select a token</span>
+        <button onclick="closeTokenModal()">✖</button>
+      </div>
+      <input type="text" id="tokenSearch" placeholder="Search name or paste address" oninput="filterTokens()" />
+      <div id="tokenList" class="token-list"></div>
+    </div>
   </div>
 
   <!-- Footer -->
