@@ -140,19 +140,6 @@ body {
   display: inline-block;
 }
 
-.profile-popover {
-  position: absolute;
-  top: 110%;
-  right: 0;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  min-width: 220px;
-  display: none;
-  z-index: 999;
-  animation: fadeIn 0.2s ease-in-out;
-}
 
 .profile-box {
   display: flex;
@@ -177,17 +164,6 @@ body {
   cursor: pointer;
 }
 
-.profile-wallet {
-  background: #f9f9f9;
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #ddd;
-  overflow-wrap: anywhere;
-}
 .profile-wallet code {
   font-family: monospace;
   color: #444;
