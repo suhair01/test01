@@ -433,20 +433,33 @@ function copyToClipboard(text) {
   showToast("Copied to clipboard", "info");
 }
 
-window.reloadEstimate = function () {
+window.reloadEstimate = async function () {
   const btn = document.querySelector(".reload-btn");
 
   if (!btn) return;
 
-  // Add the spinning class
-  btn.classList.add("active");
+  try {
+    // Start animation (spin icon)
+    btn.classList.add("active");
+    btn.disabled = true;
 
-  // Trigger updateEstimate
-  updateEstimate();
+    // Optional visual cue (change color or show toast)
+    showToast("Refreshing estimate...", "info");
 
-  // Remove the spin after a short delay
-  setTimeout(() => {
-    btn.classList.remove("active");
-  }, 400); // 400ms matches CSS transition
+    // Wait for estimate to complete
+    await updateEstimate();
+
+    // Optional: Toast feedback
+    showToast("Estimate updated!", "success");
+  } catch (err) {
+    console.error("Reload estimate failed:", err);
+    showToast("Failed to update estimate!", "error");
+  } finally {
+    // End animation
+    setTimeout(() => {
+      btn.classList.remove("active");
+      btn.disabled = false;
+    }, 500); // match spin CSS duration
+  }
 };
 
