@@ -401,6 +401,28 @@ body {
   margin-left: 8px;
 }
 
+.token-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.token-display:hover {
+  border-color: var(--ruby);
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+
 /* Toast Notifications */
 #toastContainer {
   position: fixed;
