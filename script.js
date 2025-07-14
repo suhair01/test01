@@ -144,6 +144,46 @@ async function connect() {
     showToast("Connection failed", "error");
   }
 }
+async function connect() {
+  if (!window.ethereum) {
+    alert("Please install MetaMask");
+    return;
+  }
+
+  try {
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+    if (chainId !== AVALANCHE_PARAMS.chainId) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: AVALANCHE_PARAMS.chainId }],
+        });
+      } catch (err) {
+        if (err.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [AVALANCHE_PARAMS],
+          });
+        } else {
+          return showToast("Switch to Avalanche failed", "error");
+        }
+      }
+    }
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    document.querySelector(".connect-btn").innerHTML =
+      `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} <span onclick="copyAddress(event)">📋</span>`;
+    showToast("Wallet connected!", "success");
+  } catch (err) {
+    console.error(err);
+    showToast("Connection failed!", "error");
+  }
+}
 
 async function updateBalances() {
   if (!userAddress) return;
