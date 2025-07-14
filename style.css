@@ -64,6 +64,28 @@ body {
 .connect-btn:hover {
   background: #801722;
 }
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-btn {
+  padding: 6px 14px;
+  background: none;
+  border: 1px solid var(--ruby);
+  border-radius: 10px;
+  color: var(--ruby);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.profile-btn:hover {
+  background: var(--ruby);
+  color: white;
+}
 
 /* Swap Container */
 .swap-container {
