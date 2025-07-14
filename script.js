@@ -1,4 +1,4 @@
-// RubySwap Final Script: SafeParse Integrated + Full AVAX/WAVAX Swap
+// === Constants and Setup ===
 const routerAddress = "0x06d8b6810edf37fc303f32f30ac149220c665c27";
 const arenaRouterAddress = "0xF56D524D651B90E4B84dc2FffD83079698b9066E";
 const WAVAX = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
@@ -31,7 +31,6 @@ function safeParse(val) {
 
 let provider, signer, router, arenaRouter, userAddress;
 const tokenDecimals = {};
-
 const tokens = [
   { symbol: "AVAX", address: "AVAX", logo: "avaxlogo.png" },
   { symbol: "ARENA", address: "0xb8d7710f7d8349a506b75dd184f05777c82dad0c", logo: "arenalogo.png" },
@@ -73,7 +72,6 @@ function updateLogos() {
   if (tokenIn) document.getElementById("inLogo").src = tokenIn.logo;
   if (tokenOut) document.getElementById("outLogo").src = tokenOut.logo;
 }
-
 let currentSelect = 'in';
 
 function openTokenModal(which) {
@@ -139,7 +137,6 @@ function reverseTokens() {
   outSel.selectedIndex = tmp;
   updateLogos(); updateBalances(); updateEstimate();
 }
-
 async function connect() {
   if (!window.ethereum) return alert("Please install MetaMask");
   try {
@@ -183,12 +180,6 @@ function copyAddress(e) {
   showToast("Address copied!", "info");
   setTimeout(() => (icon.innerText = "📋"), 1000);
 }
-
-function toggleProfile() {
-  const dropdown = document.getElementById("profileDropdown");
-  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-}
-
 async function updateBalances() {
   if (!userAddress) return;
   const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
@@ -229,7 +220,6 @@ async function updateEstimate() {
     document.getElementById("tokenOutAmount").value = "";
   }
 }
-
 async function swap() {
   const amt = document.getElementById("tokenInAmount").value;
   const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
@@ -271,7 +261,6 @@ async function swap() {
     showToast("Swap failed!", "error");
   }
 }
-
 function setPercentage(pct) {
   const balText = document.getElementById("balanceIn").innerText.split(":")[1]?.trim();
   const bal = parseFloat(balText);
@@ -288,35 +277,6 @@ function toggleSlippage() {
   popup.style.display = popup.style.display === "block" ? "none" : "block";
 }
 
-document.getElementById("tokenInAmount").addEventListener("input", function (e) {
-  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
-  if (!tokenIn) return;
-  let val = e.target.value.replace(/[^0-9.]/g, "");
-  const parts = val.split(".");
-  if (parts.length > 2) val = parts[0] + "." + parts[1];
-  if (tokenIn.address === "AVAX") {
-    if (parts[1] && parts[1].length > 4) val = parts[0] + "." + parts[1].substring(0, 4);
-    e.target.value = val;
-  } else {
-    if (val.includes(".")) showToast(`Decimals removed: rounded down to ${parts[0]}`, "info");
-    e.target.value = parts[0];
-  }
-  updateEstimate();
-});
-
-document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
-document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
-window.addEventListener("DOMContentLoaded", populateTokens);
-window.addEventListener("click", function (e) {
-  const profileDropdown = document.getElementById("profileDropdown");
-  const profileWrapper = document.querySelector(".profile-wrapper");
-  const slippagePopup = document.getElementById("slippagePopup");
-  const slippageBtn = document.querySelector(".settings-btn");
-
-  if (profileDropdown && profileWrapper && !profileWrapper.contains(e.target)) profileDropdown.style.display = "none";
-  if (slippagePopup && slippageBtn && !slippagePopup.contains(e.target) && !slippageBtn.contains(e.target)) slippagePopup.style.display = "none";
-});
-
 function showToast(msg, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
@@ -324,9 +284,6 @@ function showToast(msg, type = 'info') {
   document.getElementById('toastContainer').appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
 }
-
-function viewTransactions() { showToast("Coming soon: View Transactions", "info"); }
-function showHoldings() { showToast("Coming soon: Token Holdings", "info"); }
 
 function disconnect() {
   userAddress = null;
@@ -345,14 +302,42 @@ function toggleProfileDropdown(event) {
   const dropdown = document.getElementById("profileDropdown");
   dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
 }
+document.getElementById("tokenInAmount").addEventListener("input", function (e) {
+  const tokenIn = safeParse(document.getElementById("tokenInSelect").value);
+  if (!tokenIn) return;
+  let val = e.target.value.replace(/[^0-9.]/g, "");
+  const parts = val.split(".");
+  if (parts.length > 2) val = parts[0] + "." + parts[1];
+  if (tokenIn.address === "AVAX") {
+    if (parts[1] && parts[1].length > 4) val = parts[0] + "." + parts[1].substring(0, 4);
+    e.target.value = val;
+  } else {
+    if (val.includes(".")) showToast(`Decimals removed: rounded down to ${parts[0]}`, "info");
+    e.target.value = parts[0];
+  }
+  updateEstimate();
+});
 
+document.getElementById("tokenInSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
+document.getElementById("tokenOutSelect").addEventListener("change", () => { updateLogos(); updateBalances(); updateEstimate(); });
+
+window.addEventListener("DOMContentLoaded", populateTokens);
+window.addEventListener("click", function (e) {
+  const profileDropdown = document.getElementById("profileDropdown");
+  const profileWrapper = document.querySelector(".profile-wrapper");
+  const slippagePopup = document.getElementById("slippagePopup");
+  const slippageBtn = document.querySelector(".settings-btn");
+
+  if (profileDropdown && profileWrapper && !profileWrapper.contains(e.target)) profileDropdown.style.display = "none";
+  if (slippagePopup && slippageBtn && !slippagePopup.contains(e.target) && !slippageBtn.contains(e.target)) slippagePopup.style.display = "none";
+});
+
+// Attach to global window (important)
 window.connect = connect;
 window.reverseTokens = reverseTokens;
 window.swap = swap;
 window.setPercentage = setPercentage;
 window.toggleSlippage = toggleSlippage;
 window.copyAddress = copyAddress;
-window.viewTransactions = viewTransactions;
-window.showHoldings = showHoldings;
 window.disconnect = disconnect;
 window.toggleProfileDropdown = toggleProfileDropdown;
