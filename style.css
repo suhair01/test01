@@ -233,17 +233,21 @@ body {
   margin-bottom: 10px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.08);
 }
-.token-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
 .token-select {
-  position: relative;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
+.token-select img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.token-symbol-text {
+  font-weight: 600;
+  font-size: 14px;
+}
+
 .token-select img {
   position: absolute;
   left: 10px;
