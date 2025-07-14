@@ -37,11 +37,12 @@
     <div class="token-box">
       <div class="token-row">
         <div class="token-select">
-          <button class="token-btn" onclick="openModal('in')">
-            <img id="inLogo" src="avaxlogo.png" />
-          </button>
-          <select id="tokenInSelect" style="display:none;"></select>
-        </div>
+  <button class="token-btn" onclick="openModal('in')">
+    <img id="inLogo" src="avaxlogo.png" class="token-logo" />
+  </button>
+  <select id="tokenInSelect" style="display:none;"></select>
+</div>
+
         <div class="balance" id="balanceIn">Balance: 0</div>
       </div>
       <input class="amount-input" id="tokenInAmount" placeholder="0.0" oninput="updateEstimate(); validateSwap()">
@@ -56,12 +57,13 @@
 
     <div class="token-box">
       <div class="token-row">
-        <div class="token-select">
-          <button class="token-btn" onclick="openModal('out')">
-            <img id="outLogo" src="avaxlogo.png" />
-          </button>
-          <select id="tokenOutSelect" style="display:none;"></select>
-        </div>
+       <div class="token-select">
+  <button class="token-btn" onclick="openModal('out')">
+    <img id="outLogo" src="usdc.png" class="token-logo" />
+  </button>
+  <select id="tokenOutSelect" style="display:none;"></select>
+</div>
+ 
         <div class="balance" id="balanceOut">Balance: 0</div>
       </div>
       <input class="amount-input" id="tokenOutAmount" placeholder="0.0" readonly>
