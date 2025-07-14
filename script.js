@@ -181,7 +181,10 @@ function copyAddress(e) {
 
 function toggleProfile() {
   const el = document.getElementById("profilePopover");
-  if (!userAddress) return showToast("Connect wallet first", "error");
+  if (!userAddress) {
+    showToast("Connect wallet first", "error");
+    return;
+  }
 
   if (el.style.display === "block") {
     el.style.display = "none";
@@ -350,6 +353,8 @@ window.toggleSlippage = toggleSlippage;
 window.switchToAvalanche = switchToAvalanche;
 window.openProfile = openProfile;
 window.closeProfile = closeProfile;
+window.toggleProfile = toggleProfile;
+
 
 
 function showToast(msg, type = 'info') {
