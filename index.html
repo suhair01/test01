@@ -22,20 +22,28 @@
 
       <div class="profile-wrapper">
         <button class="profile-btn" onclick="toggleProfile()">👤 Profile</button>
-        <div id="profilePopover" class="profile-popover">
-          <div class="profile-box">
-            <div class="popover-header">
-              <strong>👤 Wallet</strong>
-              <button class="close-profile" onclick="toggleProfile()">×</button>
-            </div>
-            <div class="profile-wallet">
-              <div class="wallet-row">
-                <code id="profileAddress">0x...</code>
-                <button class="icon-btn copy-icon" onclick="copyAddress(event)" title="Copy">📋</button>
-                <a id="snowtraceLink" href="#" target="_blank" class="icon-btn" title="View">🔗</a>
-              </div>
-            </div>
-          </div>
+       <div id="profilePopover" class="profile-popover">
+  <div class="profile-box">
+    <div class="popover-header">
+      <span>👤 <strong>Wallet</strong></span>
+      <button class="close-profile" onclick="toggleProfile()">×</button>
+    </div>
+
+    <div class="profile-wallet">
+      <code id="profileAddress">0x966e...b9E8</code>
+    </div>
+
+    <div class="profile-actions">
+      <button class="profile-action" onclick="copyAddress(event)">
+        📋 Copy Address
+      </button>
+      <a id="snowtraceLink" href="#" target="_blank" class="profile-action">
+        🔗 View on Snowtrace
+      </a>
+    </div>
+  </div>
+</div>
+
         </div>
       </div>
 
