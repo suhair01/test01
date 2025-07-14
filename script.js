@@ -126,6 +126,12 @@ function selectToken(token) {
   updateBalances();
   updateEstimate();
 }
+const tokenDisplay = `
+  <div class="token-display">
+    <img src="${token.logo}" alt="${token.symbol}" />
+    <span class="token-name">${token.symbol}</span>
+  </div>
+`;
 
 
 function reverseTokens() {
