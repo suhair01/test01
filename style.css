@@ -459,35 +459,29 @@ body {
   to { opacity: 0; transform: translateY(20px); }
 }
 
-/* Profile Button Wrapper */
 .profile-wrapper {
   position: relative;
   display: inline-block;
 }
 
-/* Popover Style */
 .profile-popover {
   position: absolute;
-  top: 120%;
+  top: 110%;
   right: 0;
-  display: none;
-  z-index: 1000;
-}
-
-.profile-box {
   background: white;
-  border-radius: 14px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   padding: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 250px;
-  border: 1px solid #eee;
+  min-width: 220px;
+  display: none;
+  z-index: 999;
   animation: fadeIn 0.2s ease-in-out;
 }
 
-/* Simple fade-in */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+.profile-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .popover-header {
@@ -495,124 +489,50 @@ body {
   justify-content: space-between;
   align-items: center;
   font-weight: bold;
-  margin-bottom: 12px;
+  font-size: 15px;
+  margin-bottom: 6px;
 }
 
 .close-profile {
   background: none;
   border: none;
-  font-size: 18px;
-  cursor: pointer;
+  font-size: 16px;
   color: #888;
+  cursor: pointer;
 }
 
-.wallet-row {
+.profile-wallet {
+  background: #f9f9f9;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f9f9f9;
   border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
-.wallet-row code {
+.profile-wallet code {
   font-family: monospace;
   color: #444;
   flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .icon-btn {
+  background: none;
   border: none;
-  background: transparent;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   opacity: 0.7;
-  transition: opacity 0.2s;
+  transition: 0.2s;
 }
+
 .icon-btn:hover {
   opacity: 1;
 }
-/* Profile Button Wrapper */
-.profile-wrapper {
-  position: relative;
-  display: inline-block;
-}
 
-/* Popover Style */
-.profile-popover {
-  position: absolute;
-  top: 120%;
-  right: 0;
-  display: none;
-  z-index: 1000;
-}
-
-.profile-box {
-  background: white;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 250px;
-  border: 1px solid #eee;
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-/* Simple fade-in */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-.popover-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-
-.close-profile {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: #888;
-}
-
-.wallet-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 13px;
-}
-
-.wallet-row code {
-  font-family: monospace;
-  color: #444;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.icon-btn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 16px;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-.icon-btn:hover {
-  opacity: 1;
-}
-
