@@ -209,10 +209,28 @@ body {
   background: rgba(75, 66, 67, 0.1);
 }
 
-.reload-btn:hover {
-  transform: rotate(90deg);
-  color: #000;
+.reload-btn {
+  background: var(--ruby);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.3s;
 }
+.reload-btn:hover {
+  background: #b31c1c;
+  transform: rotate(180deg);
+}
+.reload-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 
 .settings-wrapper { position: relative; }
 
