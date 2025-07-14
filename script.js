@@ -70,6 +70,64 @@ function updateLogos() {
   document.getElementById("outLogo").src = tokenOut.logo;
 }
 
+let currentSelect = 'in';
+
+function openTokenModal(which) {
+  currentSelect = which;
+  document.getElementById('tokenModal').classList.add('active');
+  renderTokenList();
+}
+
+function closeTokenModal() {
+  document.getElementById('tokenModal').classList.remove('active');
+}
+
+function renderTokenList() {
+  const container = document.getElementById('tokenListContainer');
+  container.innerHTML = '';
+  for (const t of tokens) {
+    const item = document.createElement('div');
+    item.className = 'token-item';
+    item.innerHTML = `
+      <div class="token-info">
+        <img src="${t.logo}" />
+        <div>
+          <div class="token-symbol">${t.symbol}</div>
+          <div class="token-address">${t.address.slice(0, 6)}...${t.address.slice(-4)}</div>
+        </div>
+      </div>
+    `;
+    item.onclick = () => selectToken(t);
+    container.appendChild(item);
+  }
+}
+
+function filterTokens() {
+  const query = document.getElementById("tokenSearchInput").value.toLowerCase();
+  const items = document.querySelectorAll(".token-item");
+  items.forEach(item => {
+    const symbol = item.querySelector(".token-symbol").innerText.toLowerCase();
+    const address = item.querySelector(".token-address").innerText.toLowerCase();
+    item.style.display = symbol.includes(query) || address.includes(query) ? "flex" : "none";
+  });
+}
+
+function selectToken(token) {
+  if (currentSelect === 'in') {
+    document.getElementById("inLogo").src = token.logo;
+    document.getElementById("tokenInSymbol").innerText = token.symbol;
+    document.getElementById("tokenInSelect").value = JSON.stringify(token);
+  } else {
+    document.getElementById("outLogo").src = token.logo;
+    document.getElementById("tokenOutSymbol").innerText = token.symbol;
+    document.getElementById("tokenOutSelect").value = JSON.stringify(token);
+  }
+  closeTokenModal();
+  updateBalances();
+  updateEstimate();
+}
+
+
 function reverseTokens() {
   const inSel = document.getElementById("tokenInSelect");
   const outSel = document.getElementById("tokenOutSelect");
