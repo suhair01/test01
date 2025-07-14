@@ -43,7 +43,10 @@
 
     <div class="token-box">
       <div class="token-row">
-        <div class="token-select">
+        <div class="token-select" onclick="openModal('in')">
+  <img id="inLogo" src="" onerror="this.src='gold.png'" />
+  <select id="tokenInSelect" style="display:none"></select>
+</div>
           <img id="inLogo" src="" onerror="this.src='gold.png'" />
           <select id="tokenInSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
         </div>
@@ -61,7 +64,10 @@
 
     <div class="token-box">
       <div class="token-row">
-        <div class="token-select">
+     <div class="token-select" onclick="openModal('out')">
+  <img id="outLogo" src="" onerror="this.src='gold.png'" />
+  <select id="tokenOutSelect" style="display:none"></select>
+</div>
           <img id="outLogo" src="" onerror="this.src='gold.png'" />
           <select id="tokenOutSelect" onchange="updateLogos(); updateBalances(); updateEstimate()"></select>
         </div>
