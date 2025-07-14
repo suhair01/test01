@@ -568,9 +568,53 @@ body {
   }
 
   .profile-popover {
-    right: auto;
-    left: 0;
-    top: 100%;
-    margin-top: 6px;
-  }
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  min-width: 250px;
+  display: none;
+  z-index: 999;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.profile-wallet {
+  background: #f9f9f9;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: 13px;
+  text-align: center;
+  word-break: break-all;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f0f0;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, border 0.2s;
+}
+
+.profile-action:hover {
+  background: #e8e8e8;
+  border-color: var(--ruby);
 }
