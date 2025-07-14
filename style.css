@@ -18,23 +18,36 @@ body {
   min-height: 100vh;
 }
 
-/* Center wrapper to vertically center swap */
+/* Center wrapper for swap */
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 90%;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
 .center-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  min-height: calc(100vh - 220px); /* header + footer estimated height */
 }
 
-.container {
-  width: 90%;
-  max-width: 1024px;
-  margin: 0 auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+/* Swap box spacing cleanup */
+.swap-container {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 16px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  margin: 0 auto; /* no margin-top/bottom needed now */
 }
+
+
 
 /* Header and Footer */
 .header-bar, .footer {
