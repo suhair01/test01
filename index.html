@@ -94,6 +94,25 @@
     </div>
   </div>
 
+<!-- Profile Modal -->
+<div id="profileModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">👤 Profile</span>
+      <button class="close-modal" onclick="closeProfile()">×</button>
+    </div>
+    <div class="profile-section">
+      <p><strong>Wallet Address:</strong></p>
+      <div class="profile-wallet">
+        <code id="profileAddress">0x...</code>
+        <button class="copy-btn" onclick="copyAddress()">📋</button>
+        <a id="snowtraceLink" href="#" target="_blank">🔗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
