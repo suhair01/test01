@@ -407,3 +407,13 @@ function copyToClipboard(text) {
   navigator.clipboard.writeText(text);
   showToast("Copied to clipboard", "info");
 }
+function resetSwapUI() {
+  document.getElementById("tokenInAmount").value = "";
+  document.getElementById("tokenOutAmount").value = "";
+  document.getElementById("slippage").value = "1";
+  document.getElementById("tokenInSelect").selectedIndex = 0;
+  document.getElementById("tokenOutSelect").selectedIndex = 1;
+  updateLogos();
+  updateBalances();
+  updateEstimate();
+}
